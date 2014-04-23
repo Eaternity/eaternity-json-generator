@@ -8,16 +8,33 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 
 
 public class BatchGenerator {
 	
-	public static final int AMOUNT_RECIPES = 3;
+	public static final int AMOUNT_RECIPES = 10;
 	public static final int AMOUNT_INGREDIENTS = 10;
+	
+	// Here we can specify the probability of the different dimensional Ingredients
+	private static final int AMOUNT_BASE_INGREDIENTS = 50;
+	private static final int AMOUNT_TWO_DIM_INGREDIENTS = 30;
+	private static final int AMOUNT_THREE_DIM_INGREDIENTS = 20;
+	
 	
 	
 	private static final int TWO_DIMENSIONAL_BASE_NUMBER = 10000;
 	private static final int THREE_DIMENSIONAL_BASE_NUMBER = 20000;
+
+	
+	private  final int[] baseProductIds = getBaseProductIds(AMOUNT_BASE_INGREDIENTS);
+	private final int[] twoDimProductIds = getHigherDimProductIds(AMOUNT_TWO_DIM_INGREDIENTS, TWO_DIMENSIONAL_BASE_NUMBER);
+	private final int[] threeDimProductIds = getHigherDimProductIds(AMOUNT_THREE_DIM_INGREDIENTS, THREE_DIMENSIONAL_BASE_NUMBER);
+	
+	private final ArrayList<Integer> productIds = getAllProductIds();
+	
+	
+	private final String[] countries = getCountryNames();
 	
 	/**
 	 * Generate a recipe batch json with AMOUNT_INGREDIENTS recipes and 10 ingredients each.
@@ -37,12 +54,24 @@ public class BatchGenerator {
 		
 		writeFile("batch_with_" + AMOUNT_RECIPES + "_recipes.json", batchRecipesJson);
 	}
-	
+
+	private ArrayList<Integer> getAllProductIds() {
+		ArrayList<Integer> returnList = new ArrayList<>();
+		for (int i=0;i< baseProductIds.length;i++) {
+			returnList.add(baseProductIds[i]);
+		}
+		for (int i=0;i< twoDimProductIds.length;i++) {
+			returnList.add(twoDimProductIds[i]);
+		}
+		for (int i=0;i< threeDimProductIds.length;i++) {
+			returnList.add(threeDimProductIds[i]);
+		}
+		return returnList;
+	}
+
 	private  String generateIngredientJSON() {
-		int[] baseProductIds = getBaseProductIds();
-		String[] countries = getCountryNames();
 		String ingredientJSON = "{";
-		ingredientJSON += "\"id\": \"" + baseProductIds[(int)(Math.random() * baseProductIds.length)] + "\",";
+		ingredientJSON += "\"id\": \"" + productIds.get((int)(Math.random() * productIds.size())) + "\",";
 		ingredientJSON += "\"origin\": \"" + countries[(int)(Math.random() * countries.length)] + "\",";
 		ingredientJSON += getContentFromFile("ingredient.json");
 		ingredientJSON += "}";
@@ -128,8 +157,32 @@ public class BatchGenerator {
 		return fPIds;
 	}
 	
+	private int[] getBaseProductIds(int amountOfProducts) {
+		int[] baseProducts = new int[amountOfProducts];
+		
+		for (int i=0;i<amountOfProducts;i++)
+			baseProducts[i] = getBaseProductIds()[(int)(Math.random() * getBaseProductIds().length)]; 
+		return baseProducts;
+	}
 	
-
+	
+	private int[] getHigherDimProductIds(int numberOfHigherDimMatchingItems, int idBaseNumber) {
+		int[] returnList = new int[numberOfHigherDimMatchingItems];
+		String higherDimStringIds = "";
+		for (int i = 0;i < numberOfHigherDimMatchingItems-1; i++) {
+			higherDimStringIds += Integer.toString(idBaseNumber) + Integer.toString(i) + ", ";
+		}
+		higherDimStringIds += Integer.toString(idBaseNumber) + Integer.toString(numberOfHigherDimMatchingItems);
+		
+		String namesSplitted[] = higherDimStringIds.split(",");
+		int j = 0;
+		for (String name : namesSplitted) {
+			returnList[j] = Integer.parseInt(name.trim());
+			j++;
+		}
+		return returnList;
+	}
+	
 	private  String[] getCountryNames() {
 		//String names = "United States of America, Afghanistan, Albania, Algeria, Andorra, Angola, Antigua & Deps, Argentina, Armenia, Australia, Austria, Azerbaijan, Bahamas, Bahrain, Bangladesh, Barbados, Belarus, Belgium, Belize, Benin, Bhutan, Bolivia, Bosnia Herzegovina, Botswana, Brazil, Brunei, Bulgaria, Burkina, Burma, Burundi, Cambodia, Cameroon, Canada, Cape Verde, Central African Rep, Chad, Chile, People's Republic of China, Republic of China, Colombia, Comoros, Democratic Republic of the Congo, Republic of the Congo, Costa Rica,, Croatia, Cuba, Cyprus, Czech Republic, Danzig, Denmark, Djibouti, Dominica, Dominican Republic, East Timor, Ecuador, Egypt, El Salvador, Equatorial Guinea, Eritrea, Estonia, Ethiopia, Fiji, Finland, France, Gabon, Gaza Strip, The Gambia, Georgia, Germany, Ghana, Greece, Grenada, Guatemala, Guinea, Guinea-Bissau, Guyana, Haiti, Holy Roman Empire, Honduras, Hungary, Iceland, India, Indonesia, Iran, Iraq, Republic of Ireland, Israel, Italy, Ivory Coast, Jamaica, Japan, Jonathanland, Jordan, Kazakhstan, Kenya, Kiribati, North Korea, South Korea, Kosovo, Kuwait, Kyrgyzstan, Laos, Latvia, Lebanon, Lesotho, Liberia, Libya, Liechtenstein, Lithuania, Luxembourg, Macedonia, Madagascar, Malawi, Malaysia, Maldives, Mali, Malta, Marshall Islands, Mauritania, Mauritius, Mexico, Micronesia, Moldova, Monaco, Mongolia, Montenegro, Morocco, Mount Athos, Mozambique, Namibia, Nauru, Nepal, Newfoundland, Netherlands, New Zealand, Nicaragua, Niger, Nigeria, Norway, Oman, Ottoman Empire, Pakistan, Palau, Panama, Papua New Guinea, Paraguay, Peru, Philippines, Poland, Portugal, Prussia, Qatar, Romania, Rome, Russian Federation, Rwanda, St Kitts & Nevis, St Lucia, Saint Vincent & the, Grenadines, Samoa, San Marino, Sao Tome & Principe, Saudi Arabia, Senegal, Serbia, Seychelles, Sierra Leone, Singapore, Slovakia, Slovenia, Solomon Islands, Somalia, South Africa, Spain, Sri Lanka, Sudan, Suriname, Swaziland, Sweden, Switzerland, Syria, Tajikistan, Tanzania, Thailand, Togo, Tonga, Trinidad & Tobago, Tunisia, Turkey, Turkmenistan, Tuvalu, Uganda, Ukraine, United Arab Emirates, United Kingdom, Uruguay, Uzbekistan, Vanuatu, Vatican City, Venezuela, Vietnam, Yemen, Zambia, Zimbabwe";
 		String names = getContentFromFile("country_names.txt");
