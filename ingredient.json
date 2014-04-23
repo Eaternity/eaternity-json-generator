@@ -6,9 +6,9 @@
 "transport": "air",
 "production": "greenhouse",
 "producer" : "Unilever Schweiz GmbH",
-"processing": "sliced",
+"processing": "raw",
 "conservation": "frozen",
-"packaging": "bottle",
+"packaging": "none",
 "storage": 3,
 "price": 1.20
     
