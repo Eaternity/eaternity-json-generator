@@ -18,19 +18,17 @@ public class BatchGenerator {
 	public static final int AMOUNT_TRANSIENT = 25;
 	
 	// Here we can specify the probability of the different dimensional Ingredients
-	private static final int AMOUNT_BASE_INGREDIENTS = 50;
-	private static final int AMOUNT_TWO_DIM_INGREDIENTS = 30;
-	private static final int AMOUNT_THREE_DIM_INGREDIENTS = 20;
-	
-	
+	private static final int PERCENTAGE_BASE_INGREDIENTS = 50;
+	private static final int PERCENTAGE_TWO_DIM_INGREDIENTS = 30;
+	private static final int PERCENTAGE_THREE_DIM_INGREDIENTS = 20;
 	
 	private static final int TWO_DIMENSIONAL_BASE_NUMBER = 10000;
 	private static final int THREE_DIMENSIONAL_BASE_NUMBER = 20000;
 
 	
-	private  final int[] baseProductIds = getBaseProductIds(AMOUNT_BASE_INGREDIENTS);
-	private final int[] twoDimProductIds = getHigherDimProductIds(AMOUNT_TWO_DIM_INGREDIENTS, TWO_DIMENSIONAL_BASE_NUMBER);
-	private final int[] threeDimProductIds = getHigherDimProductIds(AMOUNT_THREE_DIM_INGREDIENTS, THREE_DIMENSIONAL_BASE_NUMBER);
+	private  final int[] baseProductIds = getBaseProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_BASE_INGREDIENTS/100);
+	private final int[] twoDimProductIds = getHigherDimProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_TWO_DIM_INGREDIENTS/100, TWO_DIMENSIONAL_BASE_NUMBER);
+	private final int[] threeDimProductIds = getHigherDimProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_THREE_DIM_INGREDIENTS/100, THREE_DIMENSIONAL_BASE_NUMBER);
 	
 	private final ArrayList<Integer> productIds = getAllProductIds();
 	
