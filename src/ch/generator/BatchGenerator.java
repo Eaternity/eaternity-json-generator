@@ -15,6 +15,7 @@ public class BatchGenerator {
 	
 	public static final int AMOUNT_RECIPES = 10;
 	public static final int AMOUNT_INGREDIENTS = 10;
+	public static final int AMOUNT_TRANSIENT = 25;
 	
 	// Here we can specify the probability of the different dimensional Ingredients
 	private static final int AMOUNT_BASE_INGREDIENTS = 50;
@@ -41,10 +42,16 @@ public class BatchGenerator {
 	 * @param args
 	 */
 	public void generateJSON() {
+		int counter = AMOUNT_TRANSIENT;
+		
 		String batchRecipesJson = "[";
 		
 		for (int i = 0; i< AMOUNT_RECIPES; i++) {
 			batchRecipesJson += "{	\"request-id\": " + i + ",";
+			if (counter>0) {
+				batchRecipesJson += "{	\"transient\": " + "true" + ",";
+				counter--;
+			}
 			batchRecipesJson += generateRecipeJson(AMOUNT_INGREDIENTS) + "}";
 			if (i < AMOUNT_RECIPES - 1)
 				batchRecipesJson += ",\n"; 	
