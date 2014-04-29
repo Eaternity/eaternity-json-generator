@@ -1,3 +1,8 @@
 eclipse.preferences.version=1
 encoding/<project>=UTF-8
 encoding/batch_with_125_recipes.json=UTF-8
+encoding/batch_with_1_recipes.json=UTF-8
+encoding/batch_with_250_recipes.json=UTF-8
+encoding/country_names.txt=UTF-8
+encoding/ingredient.json=UTF-8
+encoding/recipe.json=UTF-8
