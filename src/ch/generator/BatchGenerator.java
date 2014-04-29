@@ -49,7 +49,7 @@ public class BatchGenerator {
 		for (int i = 0; i< AMOUNT_RECIPES; i++) {
 			batchRecipesJson += "{	\"request-id\": " + i + ",";
 			if (counter>0) {
-				batchRecipesJson += "{	\"transient\": " + "true" + ",";
+				batchRecipesJson += "\"transient\": " + "true" + ",";
 				counter--;
 			}
 			batchRecipesJson += generateRecipeJson(AMOUNT_INGREDIENTS) + "}";
