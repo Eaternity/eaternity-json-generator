@@ -16,9 +16,9 @@ public class BatchGenerator {
 	// ATTENTION These whole setting work just until 500 baseproducts!
 	// Max AMOUNT_INGREDIENTS = PERCENTAGE_BASE_INGREDIENTS * 500 / 100
 	
-	public static final int AMOUNT_RECIPES = 125;
-	public static final int AMOUNT_INGREDIENTS = 3;
-	public static final int AMOUNT_TRANSIENT = 125;
+	public static final int AMOUNT_RECIPES = 250;
+	public static final int AMOUNT_INGREDIENTS = 10;
+	public static final int AMOUNT_TRANSIENT = 200;
 	
 	// Here we can specify the probability of the different dimensional Ingredients
 	private static final int PERCENTAGE_BASE_INGREDIENTS = 50;
@@ -28,6 +28,8 @@ public class BatchGenerator {
 	private static final int TWO_DIMENSIONAL_BASE_NUMBER = 10000;
 	private static final int THREE_DIMENSIONAL_BASE_NUMBER = 20000;
 
+	private static final boolean UNIQUE_IDS = false;
+	private static final boolean SEVERAL_COUNTRIES = false;
 	
 	private  final int[] baseProductIds = getBaseProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_BASE_INGREDIENTS/100 + 1);
 	private final int[] twoDimProductIds = getHigherDimProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_TWO_DIM_INGREDIENTS/100 + 1, TWO_DIMENSIONAL_BASE_NUMBER);
@@ -36,7 +38,12 @@ public class BatchGenerator {
 	private final ArrayList<Integer> productIds = getAllProductIds();
 	
 	
-	private final String[] countries = {"Schweiz"};//getCountryNames();
+	private String[] countries = {"Schweiz"};;
+	
+	public BatchGenerator() {
+		if (SEVERAL_COUNTRIES)
+			countries = getCountryNames();
+	}
 	
 	/**
 	 * Generate a recipe batch json with AMOUNT_INGREDIENTS recipes and 10 ingredients each.
@@ -85,8 +92,9 @@ public class BatchGenerator {
 		ingredientJSON += getContentFromFile("ingredient.json");
 		ingredientJSON += "}";
 		
-		//remove the product from the list so that its not used twice...
-		productIds.remove(index);
+		if (UNIQUE_IDS) 
+			//remove the product from the list so that its not used twice...
+			productIds.remove(index);
 		
 		return ingredientJSON;
 	}
