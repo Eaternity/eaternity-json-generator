@@ -9,13 +9,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Map;
 
 
 public class BatchGenerator {
 	
-	public static final int AMOUNT_RECIPES = 10;
-	public static final int AMOUNT_INGREDIENTS = 10;
-	public static final int AMOUNT_TRANSIENT = 25;
+	// ATTENTION These whole setting work just until 500 baseproducts!
+	// Max AMOUNT_INGREDIENTS = PERCENTAGE_BASE_INGREDIENTS * 500 / 100
+	
+	public static final int AMOUNT_RECIPES = 125;
+	public static final int AMOUNT_INGREDIENTS = 3;
+	public static final int AMOUNT_TRANSIENT = 125;
 	
 	// Here we can specify the probability of the different dimensional Ingredients
 	private static final int PERCENTAGE_BASE_INGREDIENTS = 50;
@@ -26,14 +30,14 @@ public class BatchGenerator {
 	private static final int THREE_DIMENSIONAL_BASE_NUMBER = 20000;
 
 	
-	private  final int[] baseProductIds = getBaseProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_BASE_INGREDIENTS/100);
-	private final int[] twoDimProductIds = getHigherDimProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_TWO_DIM_INGREDIENTS/100, TWO_DIMENSIONAL_BASE_NUMBER);
-	private final int[] threeDimProductIds = getHigherDimProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_THREE_DIM_INGREDIENTS/100, THREE_DIMENSIONAL_BASE_NUMBER);
+	private  final int[] baseProductIds = getBaseProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_BASE_INGREDIENTS/100 + 1);
+	private final int[] twoDimProductIds = getHigherDimProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_TWO_DIM_INGREDIENTS/100 + 1, TWO_DIMENSIONAL_BASE_NUMBER);
+	private final int[] threeDimProductIds = getHigherDimProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_THREE_DIM_INGREDIENTS/100 + 1, THREE_DIMENSIONAL_BASE_NUMBER);
 	
 	private final ArrayList<Integer> productIds = getAllProductIds();
 	
 	
-	private final String[] countries = getCountryNames();
+	private final String[] countries = {"Schweiz"};//getCountryNames();
 	
 	/**
 	 * Generate a recipe batch json with AMOUNT_INGREDIENTS recipes and 10 ingredients each.
@@ -76,10 +80,14 @@ public class BatchGenerator {
 
 	private  String generateIngredientJSON() {
 		String ingredientJSON = "{";
-		ingredientJSON += "\"id\": \"" + productIds.get((int)(Math.random() * productIds.size())) + "\",";
+		int index = (int)(Math.random() * productIds.size());
+		ingredientJSON += "\"id\": \"" + productIds.get(index) + "\",";
 		ingredientJSON += "\"origin\": \"" + countries[(int)(Math.random() * countries.length)] + "\",";
 		ingredientJSON += getContentFromFile("ingredient.json");
 		ingredientJSON += "}";
+		
+		//remove the product from the list so that its not used twice...
+		productIds.remove(index);
 		
 		return ingredientJSON;
 	}
