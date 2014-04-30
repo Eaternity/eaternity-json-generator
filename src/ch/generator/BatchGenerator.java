@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.Map;
 
 
 public class BatchGenerator {
@@ -61,7 +60,7 @@ public class BatchGenerator {
 		
 		batchRecipesJson += "]";
 		
-		writeFile("batch_with_" + AMOUNT_RECIPES + "_recipes.json", batchRecipesJson);
+		writeFile("batch_with_" + AMOUNT_RECIPES + "_recipes_each_" + AMOUNT_INGREDIENTS +"_ingredient.json", batchRecipesJson);
 	}
 
 	private ArrayList<Integer> getAllProductIds() {
