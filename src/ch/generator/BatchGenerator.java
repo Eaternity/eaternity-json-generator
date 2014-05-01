@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 
 public class BatchGenerator {
@@ -16,33 +19,51 @@ public class BatchGenerator {
 	// ATTENTION These whole setting work just until 500 baseproducts!
 	// Max AMOUNT_INGREDIENTS = PERCENTAGE_BASE_INGREDIENTS * 500 / 100
 	
-	public static final int AMOUNT_RECIPES = 250;
-	public static final int AMOUNT_INGREDIENTS = 10;
-	public static final int AMOUNT_TRANSIENT = 200;
+	public static final int AMOUNT_RECIPES = 3;
+	public static final int AMOUNT_TRANSIENT = 2;
+	public static final int AMOUNT_INGREDIENTS = 7;
+	public static final int AMOUNT_INGREDIENTS_TRANSIENT = 2;
+	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 25;
+	public static final int PERCENTAGE_DIFFERENT_MITEMS = 100; // that means the percentage value are all different mItems, then it repeats
+	
+	// TODO not implemented yet the dependance on this!
+	public static final int PERCENTAGE_MITEMS_CHANGED = 25; // this is maximum the PERCENTAGE_DIFFERENT_MITEMS
 	
 	// Here we can specify the probability of the different dimensional Ingredients
 	private static final int PERCENTAGE_BASE_INGREDIENTS = 50;
-	private static final int PERCENTAGE_TWO_DIM_INGREDIENTS = 30;
-	private static final int PERCENTAGE_THREE_DIM_INGREDIENTS = 20;
+	private static final int PERCENTAGE_TWO_DIM_INGREDIENTS = 10;
+	private static final int PERCENTAGE_THREE_DIM_INGREDIENTS = 40;
 	
 	private static final int TWO_DIMENSIONAL_BASE_NUMBER = 10000;
 	private static final int THREE_DIMENSIONAL_BASE_NUMBER = 20000;
+	private int totalAmountIngredients = AMOUNT_TRANSIENT*AMOUNT_INGREDIENTS_TRANSIENT + (AMOUNT_RECIPES - AMOUNT_TRANSIENT)*AMOUNT_INGREDIENTS;
 
 	private static final boolean UNIQUE_IDS = false;
 	private static final boolean SEVERAL_COUNTRIES = false;
 	
-	private  final int[] baseProductIds = getBaseProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_BASE_INGREDIENTS/100 + 1);
-	private final int[] twoDimProductIds = getHigherDimProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_TWO_DIM_INGREDIENTS/100 + 1, TWO_DIMENSIONAL_BASE_NUMBER);
-	private final int[] threeDimProductIds = getHigherDimProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_THREE_DIM_INGREDIENTS/100 + 1, THREE_DIMENSIONAL_BASE_NUMBER);
+	private final List<Integer> baseProductIds = getBaseProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_BASE_INGREDIENTS/100 + 1);
+	private final List<Integer> twoDimProductIds = getHigherDimProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_TWO_DIM_INGREDIENTS/100 + 1, TWO_DIMENSIONAL_BASE_NUMBER);
+	private final List<Integer> threeDimProductIds = getHigherDimProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_THREE_DIM_INGREDIENTS/100 + 1, THREE_DIMENSIONAL_BASE_NUMBER);
 	
-	private final ArrayList<Integer> productIds = getAllProductIds();
+	private List<Integer> productIds = new ArrayList<Integer>();
+	private List<String> countries = new ArrayList<String>();
 	
-	
-	private String[] countries = {"Schweiz"};;
+	private Random rand = new Random();
 	
 	public BatchGenerator() {
-		if (SEVERAL_COUNTRIES)
-			countries = getCountryNames();
+		if (AMOUNT_TRANSIENT > AMOUNT_RECIPES)
+			throw new IllegalArgumentException("Amount transient recipes can not be bigger than total amount recipes");
+		ArrayList<Integer> allProductIds = getAllProductIds();
+		
+		// add 2 because 1 for rounding and 1 for exclusion of end index.
+		countries = getCountryNames().subList(0, PERCENTAGE_DIFFERENT_ORIGINS*totalAmountIngredients/100 + 2);
+		productIds = allProductIds.subList(0, PERCENTAGE_DIFFERENT_MITEMS*totalAmountIngredients/100 + 2);
+		
+		while(productIds.size() < totalAmountIngredients) {
+			productIds.addAll(productIds);
+		}
+		
+		productIds = productIds.subList(0, totalAmountIngredients + 2);
 	}
 	
 	/**
@@ -50,6 +71,9 @@ public class BatchGenerator {
 	 * @param args
 	 */
 	public void generateJSON() {
+		System.out.println("Amount of recipes: " + AMOUNT_RECIPES);
+		System.out.println("Amount of ingredients: " + totalAmountIngredients);
+		
 		int counter = AMOUNT_TRANSIENT;
 		
 		String batchRecipesJson = "[";
@@ -58,9 +82,12 @@ public class BatchGenerator {
 			batchRecipesJson += "{	\"request-id\": " + i + ",";
 			if (counter>0) {
 				batchRecipesJson += "\"transient\": " + "true" + ",";
+				batchRecipesJson += generateRecipeJson(AMOUNT_INGREDIENTS_TRANSIENT) + "}";
 				counter--;
 			}
-			batchRecipesJson += generateRecipeJson(AMOUNT_INGREDIENTS) + "}";
+			else
+				batchRecipesJson += generateRecipeJson(AMOUNT_INGREDIENTS) + "}";
+				
 			if (i < AMOUNT_RECIPES - 1)
 				batchRecipesJson += ",\n"; 	
 		}
@@ -69,26 +96,25 @@ public class BatchGenerator {
 		
 		writeFile("batch_with_" + AMOUNT_RECIPES + "_recipes_each_" + AMOUNT_INGREDIENTS +"_ingredient.json", batchRecipesJson);
 	}
-
-	private ArrayList<Integer> getAllProductIds() {
-		ArrayList<Integer> returnList = new ArrayList<>();
-		for (int i=0;i< baseProductIds.length;i++) {
-			returnList.add(baseProductIds[i]);
+	
+	private  String generateRecipeJson(Integer numberOfIngredients) {
+		String recipeJSON = getContentFromFile("recipe.json");
+		
+		recipeJSON += "	\"ingredients\": [\n";
+		for (int i = 0; i < numberOfIngredients; i++) {
+			recipeJSON += generateIngredientJSON();
+			if (i < numberOfIngredients - 1)
+				recipeJSON += ",\n";
 		}
-		for (int i=0;i< twoDimProductIds.length;i++) {
-			returnList.add(twoDimProductIds[i]);
-		}
-		for (int i=0;i< threeDimProductIds.length;i++) {
-			returnList.add(threeDimProductIds[i]);
-		}
-		return returnList;
+		recipeJSON += "] }";
+		return recipeJSON;
 	}
 
 	private  String generateIngredientJSON() {
 		String ingredientJSON = "{";
-		int index = (int)(Math.random() * productIds.size());
+		int index = rand.nextInt(productIds.size());
 		ingredientJSON += "\"id\": \"" + productIds.get(index) + "\",";
-		ingredientJSON += "\"origin\": \"" + countries[(int)(Math.random() * countries.length)] + "\",";
+		ingredientJSON += "\"origin\": \"" + countries.get(rand.nextInt(countries.size())) + "\",";
 		ingredientJSON += getContentFromFile("ingredient.json");
 		ingredientJSON += "}";
 		
@@ -97,19 +123,6 @@ public class BatchGenerator {
 			productIds.remove(index);
 		
 		return ingredientJSON;
-	}
-	
-	private  String generateRecipeJson(Integer numberOfIngredients) {
-		String recipeJSON = getContentFromFile("recipe.json");
-		
-		recipeJSON += "	\"ingredients\": [";
-		for (int i = 0; i < numberOfIngredients; i++) {
-			recipeJSON += generateIngredientJSON();
-			if (i < numberOfIngredients - 1)
-				recipeJSON += ",\n";
-		}
-		recipeJSON += "] }";
-		return recipeJSON;
 	}
 	
 	private void writeFile(String filename, String content) {
@@ -155,8 +168,8 @@ public class BatchGenerator {
 		return content;
 	}
 	
-	private  int[] getBaseProductIds() {
-		int[] fPIds = new int[] { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121,
+	private  List<Integer> getBaseProductIds() {
+		Integer[] fPIds = new Integer[] { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121,
 				122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153,
 				154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 200, 201, 202, 203, 204, 205,
 				206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237,
@@ -174,20 +187,32 @@ public class BatchGenerator {
 				1539, 1540, 1541, 1542, 1543, 1544, 1546, 1547, 1548, 1549, 1550, 1551, 1552, 1553, 1558, 1555, 1556, 1557, 1559, 1560, 1561, 1562, 1563, 1564, 1565, 1554, 1567,
 				1568, 1569, 1570, 1571, 1572, 1574, 1576, 1578, 1580, 1581, 1582, 1583, 1584, 1585, 1586, 1590, 1591, 1592, 1593, 1597, 1598, 1599, 1600, 1601, 1602, 1604, 1606,
 				1608, 1618, 1619 };
-		return fPIds;
+		return new ArrayList<Integer>(Arrays.asList(fPIds));
 	}
 	
-	private int[] getBaseProductIds(int amountOfProducts) {
-		int[] baseProducts = new int[amountOfProducts];
+
+	private ArrayList<Integer> getAllProductIds() {
+		ArrayList<Integer> returnList = new ArrayList<>();
+		returnList.addAll(baseProductIds);
+		returnList.addAll(twoDimProductIds);
+		returnList.addAll(threeDimProductIds);
 		
-		for (int i=0;i<amountOfProducts;i++)
-			baseProducts[i] = getBaseProductIds()[(int)(Math.random() * getBaseProductIds().length)]; 
-		return baseProducts;
+		// shuffle the ids
+		ArrayList<Integer> randomProductIds = new ArrayList<Integer>();
+		for (int i = 0; i < returnList.size(); i++) {
+			randomProductIds.add(returnList.get(rand.nextInt(returnList.size())));
+		}
+		
+		return randomProductIds;
+	}
+	
+	private List<Integer> getBaseProductIds(int amountOfProducts) {
+		return getBaseProductIds().subList(0, amountOfProducts);
 	}
 	
 	
-	private int[] getHigherDimProductIds(int numberOfHigherDimMatchingItems, int idBaseNumber) {
-		int[] returnList = new int[numberOfHigherDimMatchingItems];
+	private List<Integer> getHigherDimProductIds(int numberOfHigherDimMatchingItems, int idBaseNumber) {
+		List<Integer> returnList = new ArrayList<Integer>();
 		String higherDimStringIds = "";
 		for (int i = 0;i < numberOfHigherDimMatchingItems-1; i++) {
 			higherDimStringIds += Integer.toString(idBaseNumber) + Integer.toString(i) + ", ";
@@ -195,22 +220,21 @@ public class BatchGenerator {
 		higherDimStringIds += Integer.toString(idBaseNumber) + Integer.toString(numberOfHigherDimMatchingItems);
 		
 		String namesSplitted[] = higherDimStringIds.split(",");
-		int j = 0;
 		for (String name : namesSplitted) {
-			returnList[j] = Integer.parseInt(name.trim());
-			j++;
+			returnList.add(Integer.parseInt(name.trim()));
 		}
 		return returnList;
 	}
 	
-	private  String[] getCountryNames() {
+	private  List<String> getCountryNames() {
 		//String names = "United States of America, Afghanistan, Albania, Algeria, Andorra, Angola, Antigua & Deps, Argentina, Armenia, Australia, Austria, Azerbaijan, Bahamas, Bahrain, Bangladesh, Barbados, Belarus, Belgium, Belize, Benin, Bhutan, Bolivia, Bosnia Herzegovina, Botswana, Brazil, Brunei, Bulgaria, Burkina, Burma, Burundi, Cambodia, Cameroon, Canada, Cape Verde, Central African Rep, Chad, Chile, People's Republic of China, Republic of China, Colombia, Comoros, Democratic Republic of the Congo, Republic of the Congo, Costa Rica,, Croatia, Cuba, Cyprus, Czech Republic, Danzig, Denmark, Djibouti, Dominica, Dominican Republic, East Timor, Ecuador, Egypt, El Salvador, Equatorial Guinea, Eritrea, Estonia, Ethiopia, Fiji, Finland, France, Gabon, Gaza Strip, The Gambia, Georgia, Germany, Ghana, Greece, Grenada, Guatemala, Guinea, Guinea-Bissau, Guyana, Haiti, Holy Roman Empire, Honduras, Hungary, Iceland, India, Indonesia, Iran, Iraq, Republic of Ireland, Israel, Italy, Ivory Coast, Jamaica, Japan, Jonathanland, Jordan, Kazakhstan, Kenya, Kiribati, North Korea, South Korea, Kosovo, Kuwait, Kyrgyzstan, Laos, Latvia, Lebanon, Lesotho, Liberia, Libya, Liechtenstein, Lithuania, Luxembourg, Macedonia, Madagascar, Malawi, Malaysia, Maldives, Mali, Malta, Marshall Islands, Mauritania, Mauritius, Mexico, Micronesia, Moldova, Monaco, Mongolia, Montenegro, Morocco, Mount Athos, Mozambique, Namibia, Nauru, Nepal, Newfoundland, Netherlands, New Zealand, Nicaragua, Niger, Nigeria, Norway, Oman, Ottoman Empire, Pakistan, Palau, Panama, Papua New Guinea, Paraguay, Peru, Philippines, Poland, Portugal, Prussia, Qatar, Romania, Rome, Russian Federation, Rwanda, St Kitts & Nevis, St Lucia, Saint Vincent & the, Grenadines, Samoa, San Marino, Sao Tome & Principe, Saudi Arabia, Senegal, Serbia, Seychelles, Sierra Leone, Singapore, Slovakia, Slovenia, Solomon Islands, Somalia, South Africa, Spain, Sri Lanka, Sudan, Suriname, Swaziland, Sweden, Switzerland, Syria, Tajikistan, Tanzania, Thailand, Togo, Tonga, Trinidad & Tobago, Tunisia, Turkey, Turkmenistan, Tuvalu, Uganda, Ukraine, United Arab Emirates, United Kingdom, Uruguay, Uzbekistan, Vanuatu, Vatican City, Venezuela, Vietnam, Yemen, Zambia, Zimbabwe";
 		String names = getContentFromFile("country_names.txt");
-		String namesSplitted[] = names.split(",");
+		String[] namesSplitted = names.split(",");
+		List<String> countryNames = new ArrayList<String>();
 		for (String name : namesSplitted) {
-			name.trim();
+			countryNames.add(new String(name.trim()));
 		}
-		return namesSplitted;
+		return countryNames;
 	}
 
 	public void generateMatchingItemIds(int numberOf2DimMatchingItems,int numberOf3DimMatchingItems) {

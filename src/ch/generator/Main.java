@@ -5,6 +5,6 @@ public class Main {
 	public static void main(String[] args) {
 		BatchGenerator batchGenerator = new BatchGenerator();
 		batchGenerator.generateJSON();
-		batchGenerator.generateMatchingItemIds(1000,1000);
+		//batchGenerator.generateMatchingItemIds(1000,1000);
 	}
 }
