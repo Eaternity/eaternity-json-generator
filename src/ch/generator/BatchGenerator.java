@@ -19,11 +19,11 @@ public class BatchGenerator {
 	// ATTENTION These whole setting work just until 500 baseproducts!
 	// Max AMOUNT_INGREDIENTS = PERCENTAGE_BASE_INGREDIENTS * 500 / 100
 	
-	public static final int AMOUNT_RECIPES = 3;
-	public static final int AMOUNT_TRANSIENT = 2;
+	public static final int AMOUNT_RECIPES = 125;
+	public static final int AMOUNT_TRANSIENT = 95;
 	public static final int AMOUNT_INGREDIENTS = 7;
 	public static final int AMOUNT_INGREDIENTS_TRANSIENT = 2;
-	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 25;
+	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 1;
 	public static final int PERCENTAGE_DIFFERENT_MITEMS = 100; // that means the percentage value are all different mItems, then it repeats
 	
 	// TODO not implemented yet the dependance on this!
@@ -31,8 +31,8 @@ public class BatchGenerator {
 	
 	// Here we can specify the probability of the different dimensional Ingredients
 	private static final int PERCENTAGE_BASE_INGREDIENTS = 50;
-	private static final int PERCENTAGE_TWO_DIM_INGREDIENTS = 10;
-	private static final int PERCENTAGE_THREE_DIM_INGREDIENTS = 40;
+	private static final int PERCENTAGE_TWO_DIM_INGREDIENTS = 30;
+	private static final int PERCENTAGE_THREE_DIM_INGREDIENTS = 20;
 	
 	private static final int TWO_DIMENSIONAL_BASE_NUMBER = 10000;
 	private static final int THREE_DIMENSIONAL_BASE_NUMBER = 20000;
@@ -41,9 +41,9 @@ public class BatchGenerator {
 	private static final boolean UNIQUE_IDS = false;
 	private static final boolean SEVERAL_COUNTRIES = false;
 	
-	private final List<Integer> baseProductIds = getBaseProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_BASE_INGREDIENTS/100 + 1);
-	private final List<Integer> twoDimProductIds = getHigherDimProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_TWO_DIM_INGREDIENTS/100 + 1, TWO_DIMENSIONAL_BASE_NUMBER);
-	private final List<Integer> threeDimProductIds = getHigherDimProductIds(AMOUNT_RECIPES*AMOUNT_INGREDIENTS*PERCENTAGE_THREE_DIM_INGREDIENTS/100 + 1, THREE_DIMENSIONAL_BASE_NUMBER);
+	private final List<Integer> baseProductIds = getBaseProductIds(1000*PERCENTAGE_BASE_INGREDIENTS/100 + 1);
+	private final List<Integer> twoDimProductIds = getHigherDimProductIds(1000*PERCENTAGE_TWO_DIM_INGREDIENTS/100 + 1, TWO_DIMENSIONAL_BASE_NUMBER);
+	private final List<Integer> threeDimProductIds = getHigherDimProductIds(1000*PERCENTAGE_THREE_DIM_INGREDIENTS/100 + 1, THREE_DIMENSIONAL_BASE_NUMBER);
 	
 	private List<Integer> productIds = new ArrayList<Integer>();
 	private List<String> countries = new ArrayList<String>();
@@ -192,15 +192,18 @@ public class BatchGenerator {
 	
 
 	private ArrayList<Integer> getAllProductIds() {
-		ArrayList<Integer> returnList = new ArrayList<>();
-		returnList.addAll(baseProductIds);
-		returnList.addAll(twoDimProductIds);
-		returnList.addAll(threeDimProductIds);
+		ArrayList<Integer> productIds = new ArrayList<>();
+		productIds.addAll(baseProductIds);
+		productIds.addAll(twoDimProductIds);
+		productIds.addAll(threeDimProductIds);
 		
 		// shuffle the ids
 		ArrayList<Integer> randomProductIds = new ArrayList<Integer>();
-		for (int i = 0; i < returnList.size(); i++) {
-			randomProductIds.add(returnList.get(rand.nextInt(returnList.size())));
+		int index = 0;
+		for (int i = 0; i < productIds.size(); i++) {
+			index = rand.nextInt(productIds.size());
+			randomProductIds.add(productIds.get(index));
+			productIds.remove(index);
 		}
 		
 		return randomProductIds;
