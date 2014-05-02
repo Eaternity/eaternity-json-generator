@@ -37,9 +37,6 @@ public class BatchGenerator {
 	private static final int TWO_DIMENSIONAL_BASE_NUMBER = 10000;
 	private static final int THREE_DIMENSIONAL_BASE_NUMBER = 20000;
 	private int totalAmountIngredients = AMOUNT_TRANSIENT*AMOUNT_INGREDIENTS_TRANSIENT + (AMOUNT_RECIPES - AMOUNT_TRANSIENT)*AMOUNT_INGREDIENTS;
-
-	private static final boolean UNIQUE_IDS = false;
-	private static final boolean SEVERAL_COUNTRIES = false;
 	
 	private final List<Integer> baseProductIds = getBaseProductIds(1000*PERCENTAGE_BASE_INGREDIENTS/100 + 1);
 	private final List<Integer> twoDimProductIds = getHigherDimProductIds(1000*PERCENTAGE_TWO_DIM_INGREDIENTS/100 + 1, TWO_DIMENSIONAL_BASE_NUMBER);
@@ -118,9 +115,8 @@ public class BatchGenerator {
 		ingredientJSON += getContentFromFile("ingredient.json");
 		ingredientJSON += "}";
 		
-		if (UNIQUE_IDS) 
-			//remove the product from the list so that its not used twice...
-			productIds.remove(index);
+		//remove the product from the list so that its not used twice...
+		productIds.remove(index);
 		
 		return ingredientJSON;
 	}
