@@ -19,11 +19,11 @@ public class BatchGenerator {
 	// ATTENTION These whole setting work just until 500 baseproducts!
 	// Max AMOUNT_INGREDIENTS = PERCENTAGE_BASE_INGREDIENTS * 500 / 100
 	
-	public static final int AMOUNT_RECIPES = 125;
-	public static final int AMOUNT_TRANSIENT = 95;
-	public static final int AMOUNT_INGREDIENTS = 7;
-	public static final int AMOUNT_INGREDIENTS_TRANSIENT = 2;
-	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 1;
+	public static final int AMOUNT_RECIPES = 60;
+	public static final int AMOUNT_TRANSIENT = 60;
+	public static final int AMOUNT_INGREDIENTS = 10;
+	public static final int AMOUNT_INGREDIENTS_TRANSIENT = 10;
+	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 0;
 	public static final int PERCENTAGE_DIFFERENT_MITEMS = 100; // that means the percentage value are all different mItems, then it repeats
 	
 	// TODO not implemented yet the dependance on this!
@@ -36,6 +36,8 @@ public class BatchGenerator {
 	
 	private static final int TWO_DIMENSIONAL_BASE_NUMBER = 10000;
 	private static final int THREE_DIMENSIONAL_BASE_NUMBER = 20000;
+	
+	private static final boolean REAL_MATCHING_ITEMS = 	true;
 	private int totalAmountIngredients = AMOUNT_TRANSIENT*AMOUNT_INGREDIENTS_TRANSIENT + (AMOUNT_RECIPES - AMOUNT_TRANSIENT)*AMOUNT_INGREDIENTS;
 	
 	private final List<Integer> baseProductIds = getBaseProductIds(1000*PERCENTAGE_BASE_INGREDIENTS/100 + 1);
@@ -53,9 +55,10 @@ public class BatchGenerator {
 		ArrayList<Integer> allProductIds = getAllProductIds();
 		
 		// add 2 because 1 for rounding and 1 for exclusion of end index.
-		countries = getCountryNames().subList(0, PERCENTAGE_DIFFERENT_ORIGINS*totalAmountIngredients/100 + 2);
-		productIds = allProductIds.subList(0, PERCENTAGE_DIFFERENT_MITEMS*totalAmountIngredients/100 + 2);
+		countries = getCountryNames().subList(0, Math.min((PERCENTAGE_DIFFERENT_ORIGINS*totalAmountIngredients/100 + 2), getCountryNames().size()));
+		productIds = new ArrayList<Integer>(allProductIds.subList(0, Math.min(PERCENTAGE_DIFFERENT_MITEMS*totalAmountIngredients/100 + 2, allProductIds.size())));
 		
+		// repeat the products in the list so that PERCENTAGE_DIFFERENT_MITEMS is correct
 		while(productIds.size() < totalAmountIngredients) {
 			productIds.addAll(productIds);
 		}
@@ -91,7 +94,7 @@ public class BatchGenerator {
 		
 		batchRecipesJson += "]";
 		
-		writeFile("batch_with_" + AMOUNT_RECIPES + "_recipes_each_" + AMOUNT_INGREDIENTS +"_ingredient.json", batchRecipesJson);
+		writeFile("batch_" + AMOUNT_RECIPES + "_recipes_" + totalAmountIngredients +"_ingredient.json", batchRecipesJson);
 	}
 	
 	private  String generateRecipeJson(Integer numberOfIngredients) {
@@ -189,9 +192,13 @@ public class BatchGenerator {
 
 	private ArrayList<Integer> getAllProductIds() {
 		ArrayList<Integer> productIds = new ArrayList<>();
-		productIds.addAll(baseProductIds);
-		productIds.addAll(twoDimProductIds);
-		productIds.addAll(threeDimProductIds);
+		if (REAL_MATCHING_ITEMS)
+			productIds.addAll(getRealMatchingItemIds());
+		else {
+			productIds.addAll(baseProductIds);
+			productIds.addAll(twoDimProductIds);
+			productIds.addAll(threeDimProductIds);
+		}
 		
 		// shuffle the ids
 		ArrayList<Integer> randomProductIds = new ArrayList<Integer>();
@@ -234,6 +241,16 @@ public class BatchGenerator {
 			countryNames.add(new String(name.trim()));
 		}
 		return countryNames;
+	}
+	
+	private List<Integer> getRealMatchingItemIds() {
+		String ids = getContentFromFile("real_matching_item_ids.txt");
+		String[] idsSplitted = ids.split(",");
+		List<Integer> idList = new ArrayList<Integer>();
+		for (String name : idsSplitted) {
+			idList.add(Integer.valueOf(name.trim()));
+		}
+		return idList;
 	}
 
 	public void generateMatchingItemIds(int numberOf2DimMatchingItems,int numberOf3DimMatchingItems) {
