@@ -16,14 +16,16 @@ import java.util.Random;
 
 public class BatchGenerator {
 	
+	private static final int AMOUNT_SUPPLIES = 55;
+	
 	// ATTENTION These whole setting work just until 500 baseproducts!
 	// Max AMOUNT_INGREDIENTS = PERCENTAGE_BASE_INGREDIENTS * 500 / 100
 	
-	public static final int AMOUNT_RECIPES = 60;
-	public static final int AMOUNT_TRANSIENT = 60;
+	public static final int AMOUNT_RECIPES = 250;
+	public static final int AMOUNT_TRANSIENT = 250;
 	public static final int AMOUNT_INGREDIENTS = 10;
 	public static final int AMOUNT_INGREDIENTS_TRANSIENT = 10;
-	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 0;
+	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 100;
 	public static final int PERCENTAGE_DIFFERENT_MITEMS = 100; // that means the percentage value are all different mItems, then it repeats
 	
 	// TODO not implemented yet the dependance on this!
@@ -37,7 +39,7 @@ public class BatchGenerator {
 	private static final int TWO_DIMENSIONAL_BASE_NUMBER = 10000;
 	private static final int THREE_DIMENSIONAL_BASE_NUMBER = 20000;
 	
-	private static final boolean REAL_MATCHING_ITEMS = 	true;
+	private static final boolean REAL_MATCHING_ITEMS = false;
 	private int totalAmountIngredients = AMOUNT_TRANSIENT*AMOUNT_INGREDIENTS_TRANSIENT + (AMOUNT_RECIPES - AMOUNT_TRANSIENT)*AMOUNT_INGREDIENTS;
 	
 	private final List<Integer> baseProductIds = getBaseProductIds(1000*PERCENTAGE_BASE_INGREDIENTS/100 + 1);
@@ -67,10 +69,10 @@ public class BatchGenerator {
 	}
 	
 	/**
-	 * Generate a recipe batch json with AMOUNT_INGREDIENTS recipes and 10 ingredients each.
+	 * Generate a recipe batch json with AMOUNT_INGREDIENTS recipes and AMOUNT_INGREDIENTS or AMOUNT_INGREDIENTS_TRANSIENT ingredients each.
 	 * @param args
 	 */
-	public void generateJSON() {
+	public void generateRecipeJSON() {
 		System.out.println("Amount of recipes: " + AMOUNT_RECIPES);
 		System.out.println("Amount of ingredients: " + totalAmountIngredients);
 		
@@ -82,11 +84,11 @@ public class BatchGenerator {
 			batchRecipesJson += "{	\"request-id\": " + i + ",";
 			if (counter>0) {
 				batchRecipesJson += "\"transient\": " + "true" + ",";
-				batchRecipesJson += generateRecipeJson(AMOUNT_INGREDIENTS_TRANSIENT) + "}";
+				batchRecipesJson += generateCompositeRootJson(AMOUNT_INGREDIENTS_TRANSIENT, "recipe") + "}";
 				counter--;
 			}
 			else
-				batchRecipesJson += generateRecipeJson(AMOUNT_INGREDIENTS) + "}";
+				batchRecipesJson += generateCompositeRootJson(AMOUNT_INGREDIENTS, "recipe") + "}";
 				
 			if (i < AMOUNT_RECIPES - 1)
 				batchRecipesJson += ",\n"; 	
@@ -97,17 +99,44 @@ public class BatchGenerator {
 		writeFile("batch_" + AMOUNT_RECIPES + "_recipes_" + totalAmountIngredients +"_ingredient.json", batchRecipesJson);
 	}
 	
-	private  String generateRecipeJson(Integer numberOfIngredients) {
-		String recipeJSON = getContentFromFile("recipe.json");
+	
+
+	public void generateSupplyJSON() {
+		System.out.println("Amount of supplies: " + AMOUNT_SUPPLIES);
+		System.out.println("Amount of ingredients: " + totalAmountIngredients);
 		
-		recipeJSON += "	\"ingredients\": [\n";
-		for (int i = 0; i < numberOfIngredients; i++) {
-			recipeJSON += generateIngredientJSON();
-			if (i < numberOfIngredients - 1)
-				recipeJSON += ",\n";
+		String batchRecipesJson = "[";
+		
+		for (int i = 0; i< AMOUNT_SUPPLIES; i++) {
+			batchRecipesJson += "{	\"request-id\": " + i + ",";
+			batchRecipesJson += generateCompositeRootJson(AMOUNT_INGREDIENTS, "supply") + "}";
+				
+			if (i < AMOUNT_SUPPLIES - 1)
+				batchRecipesJson += ",\n"; 	
 		}
-		recipeJSON += "] }";
-		return recipeJSON;
+		
+		batchRecipesJson += "]";
+		
+		writeFile("batch_" + AMOUNT_SUPPLIES + "_supplies_" + totalAmountIngredients +"_ingredient.json", batchRecipesJson);
+	}
+	
+	
+	
+	//**************************************************
+	
+	private  String generateCompositeRootJson(Integer numberOfIngredients, String kindOfcompositeRoot) {
+		String compositeRootJSON = getContentFromFile(kindOfcompositeRoot + ".json");
+		if (kindOfcompositeRoot.equals("supply"))
+			compositeRootJSON += "\"supply-date\": " + "\"2014-06-" + generateRandomDay()+ "\",";
+		
+		compositeRootJSON += "	\"ingredients\": [\n";
+		for (int i = 0; i < numberOfIngredients; i++) {
+			compositeRootJSON += generateIngredientJSON();
+			if (i < numberOfIngredients - 1)
+				compositeRootJSON += ",\n";
+		}
+		compositeRootJSON += "] }";
+		return compositeRootJSON;
 	}
 
 	private  String generateIngredientJSON() {
@@ -269,5 +298,13 @@ public class BatchGenerator {
 		
 	}
 
-				
+	private String generateRandomDay() {
+		int randomInt = rand.nextInt(31);
+		randomInt++;
+		String returnString = "";
+		if (randomInt <10)
+			returnString += 0;
+		returnString += randomInt;
+		return returnString;
+	}
 }
