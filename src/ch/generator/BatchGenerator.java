@@ -299,7 +299,7 @@ public class BatchGenerator {
 	}
 
 	private String generateRandomDay() {
-		int randomInt = rand.nextInt(31);
+		int randomInt = rand.nextInt(30);
 		randomInt++;
 		String returnString = "";
 		if (randomInt <10)
