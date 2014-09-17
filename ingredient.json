@@ -1,14 +1,5 @@
-
-
 "name": "tomato",
-"amount": 150,
 "unit": "gram",
-"transport": "air",
-"production": "greenhouse",
 "producer" : "Unilever Schweiz GmbH",
-"processing": "raw",
-"conservation": "frozen",
-"packaging": "none",
 "storage": 3,
 "price": 1.20
-    
