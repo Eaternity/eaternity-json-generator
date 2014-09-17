@@ -19,9 +19,9 @@ public class BatchGenerator {
 	// Max AMOUNT_INGREDIENTS_PER_RECIPE = PERCENTAGE_BASE_INGREDIENTS * 500 / 100
 
 	public static final int YEAR = 2014;
-	public static final int MONTH = 1;
+	public static final int MONTH = 6;
 
-	public static final int AMOUNT_SUPPLIES = 55;
+	public static final int AMOUNT_SUPPLIES = 25;
 	public static final int AMOUNT_RECIPES = 40;
 	public static final int AMOUNT_TRANSIENT = 0;
 	public static final int AMOUNT_INGREDIENTS_PER_RECIPE = 10;
@@ -51,6 +51,9 @@ public class BatchGenerator {
 
 	private List<Integer> productIds = new ArrayList<Integer>();
 	private List<String> countries = new ArrayList<String>();
+	
+	private static final int INGREDIENT_WEIGHT_RANGE_RECIPES = 300;
+	private static final int INGREDIENT_WEIGHT_RANGE_SUPPLIES = 6000;
 
 	private static final String[] TRANSPORATION_MODES = new String[] { "air", "ground", "sea", "train" };
 	private static final String[] PRODUCTION_MODES = new String[] { "standard", " organic", "fair-trade", "greenhouse", " farm", "wild-caught" };
@@ -143,7 +146,7 @@ public class BatchGenerator {
 
 		compositeRootJSON += "	\"ingredients\": [\n";
 		for (int i = 0; i < numberOfIngredients; i++) {
-			compositeRootJSON += generateIngredientJSON();
+			compositeRootJSON += generateIngredientJSON(kindOfcompositeRoot);
 			if (i < numberOfIngredients - 1)
 				compositeRootJSON += ",\n";
 		}
@@ -151,14 +154,18 @@ public class BatchGenerator {
 		return compositeRootJSON;
 	}
 
-	private String generateIngredientJSON() {
+	private String generateIngredientJSON(String kindOfcompositeRoot) {
+		int weightRange = INGREDIENT_WEIGHT_RANGE_RECIPES;
+		if (kindOfcompositeRoot.equals("supply"))
+			weightRange = INGREDIENT_WEIGHT_RANGE_SUPPLIES;
+		
 		List<Integer> productIdsCopy = new ArrayList<Integer>(productIds);
 		String ingredientJSON = "{";
 		int index = rand.nextInt(productIdsCopy.size());
 		ingredientJSON += "\"id\": \"" + productIdsCopy.get(index) + "\",";
 		ingredientJSON += "\"name\": \"" + INGREDIENT_NAMES[rand.nextInt(INGREDIENT_NAMES.length)] + "\",";
 		ingredientJSON += "\"origin\": \"" + countries.get(rand.nextInt(countries.size())) + "\",";
-		ingredientJSON += "\"amount\": " + rand.nextInt(300) + ",";
+		ingredientJSON += "\"amount\": " + rand.nextInt(weightRange) + ",";
 		ingredientJSON += "\"transport\": \"" + TRANSPORATION_MODES[rand.nextInt(TRANSPORATION_MODES.length)] + "\",";
 		ingredientJSON += "\"production\": \"" + PRODUCTION_MODES[rand.nextInt(PRODUCTION_MODES.length)] + "\",";
 		ingredientJSON += "\"processing\": \"" + PROCESSING_MODES[rand.nextInt(PROCESSING_MODES.length)] + "\",";
