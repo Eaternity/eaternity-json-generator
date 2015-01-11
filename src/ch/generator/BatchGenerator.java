@@ -11,6 +11,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class BatchGenerator {
@@ -21,12 +22,13 @@ public class BatchGenerator {
 	public static final int YEAR = 2014;
 	public static final int MONTH = 6;
 
-	public static final int AMOUNT_SUPPLIES = 25;
-	public static final int AMOUNT_RECIPES = 40;
+	public static final int AMOUNT_SUPPLIES = 22;
+	public static final int AMOUNT_RECIPES = 250;
 	public static final int AMOUNT_TRANSIENT = 0;
-	public static final int AMOUNT_INGREDIENTS_PER_RECIPE = 10;
+	// if you change this, also change INGREDIENT_WEIGHT_RANGE_RECIPES to get a couple of climate friendly recipe
+	public static final int AMOUNT_INGREDIENTS_PER_RECIPE = 3;
 	public static final int AMOUNT_INGREDIENTS_PER_SUPPLY = 50;
-	public static final int AMOUNT_INGREDIENTS_TRANSIENT = 10;
+	public static final int AMOUNT_INGREDIENTS_TRANSIENT = 4000;
 	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 100;
 	public static final int PERCENTAGE_DIFFERENT_MITEMS = 100; // that means the percentage value are all different mItems, then it repeats
 
@@ -42,7 +44,7 @@ public class BatchGenerator {
 	private static final int TWO_DIMENSIONAL_BASE_NUMBER = 10000;
 	private static final int THREE_DIMENSIONAL_BASE_NUMBER = 20000;
 
-	private static final boolean REAL_MATCHING_ITEMS = false;
+	private static final boolean REAL_MATCHING_ITEMS = true;
 	private int totalAmountIngredients = AMOUNT_TRANSIENT * AMOUNT_INGREDIENTS_TRANSIENT + (AMOUNT_RECIPES - AMOUNT_TRANSIENT) * AMOUNT_INGREDIENTS_PER_RECIPE;
 
 	private final List<Integer> baseProductIds = getBaseProductIds(900 * PERCENTAGE_BASE_INGREDIENTS / 100 + 1);
@@ -52,7 +54,7 @@ public class BatchGenerator {
 	private List<Integer> productIds = new ArrayList<Integer>();
 	private List<String> countries = new ArrayList<String>();
 	
-	private static final int INGREDIENT_WEIGHT_RANGE_RECIPES = 300;
+	private static final int INGREDIENT_WEIGHT_RANGE_RECIPES = 80;
 	private static final int INGREDIENT_WEIGHT_RANGE_SUPPLIES = 6000;
 
 	private static final String[] TRANSPORATION_MODES = new String[] { "air", "ground", "sea", "train" };
@@ -63,8 +65,9 @@ public class BatchGenerator {
 	private static final String[] INGREDIENT_NAMES = getIngredientNames();
 
 	private Random rand = new Random();
+	private Map<Integer, String> matchingItemIdsAndNames;
 
-	public BatchGenerator() {
+	public BatchGenerator() throws IOException {
 		if (AMOUNT_TRANSIENT > AMOUNT_RECIPES)
 			throw new IllegalArgumentException("Amount transient recipes can not be bigger than total amount recipes");
 		ArrayList<Integer> allProductIds = getAllProductIds();
@@ -136,6 +139,8 @@ public class BatchGenerator {
 	// **************************************************
 
 	private String generateCompositeRootJson(Integer numberOfIngredients, String kindOfcompositeRoot) {
+		List<Integer> productIdsCopy = new ArrayList<Integer>(productIds);
+		
 		String compositeRootJSON = getContentFromFile(kindOfcompositeRoot + ".json");
 		if (kindOfcompositeRoot.equals("supply"))
 			compositeRootJSON += "\"supply-date\": ";
@@ -146,7 +151,7 @@ public class BatchGenerator {
 
 		compositeRootJSON += "	\"ingredients\": [\n";
 		for (int i = 0; i < numberOfIngredients; i++) {
-			compositeRootJSON += generateIngredientJSON(kindOfcompositeRoot);
+			compositeRootJSON += generateIngredientJSON(kindOfcompositeRoot,productIdsCopy);
 			if (i < numberOfIngredients - 1)
 				compositeRootJSON += ",\n";
 		}
@@ -154,16 +159,22 @@ public class BatchGenerator {
 		return compositeRootJSON;
 	}
 
-	private String generateIngredientJSON(String kindOfcompositeRoot) {
+	private String generateIngredientJSON(String kindOfcompositeRoot, List<Integer> productIdsCopy) {
 		int weightRange = INGREDIENT_WEIGHT_RANGE_RECIPES;
 		if (kindOfcompositeRoot.equals("supply"))
 			weightRange = INGREDIENT_WEIGHT_RANGE_SUPPLIES;
 		
-		List<Integer> productIdsCopy = new ArrayList<Integer>(productIds);
+		
 		String ingredientJSON = "{";
 		int index = rand.nextInt(productIdsCopy.size());
 		ingredientJSON += "\"id\": \"" + productIdsCopy.get(index) + "\",";
-		ingredientJSON += "\"name\": \"" + INGREDIENT_NAMES[rand.nextInt(INGREDIENT_NAMES.length)] + "\",";
+		String ingredientName;
+		if (REAL_MATCHING_ITEMS) {
+			ingredientName = matchingItemIdsAndNames.get(productIdsCopy.get(index));
+		} else {
+			ingredientName = INGREDIENT_NAMES[rand.nextInt(INGREDIENT_NAMES.length)];
+		}
+		ingredientJSON += "\"name\": \"" + ingredientName + "\",";
 		ingredientJSON += "\"origin\": \"" + countries.get(rand.nextInt(countries.size())) + "\",";
 		ingredientJSON += "\"amount\": " + rand.nextInt(weightRange) + ",";
 		ingredientJSON += "\"transport\": \"" + TRANSPORATION_MODES[rand.nextInt(TRANSPORATION_MODES.length)] + "\",";
@@ -224,10 +235,10 @@ public class BatchGenerator {
 		return content;
 	}
 
-	private ArrayList<Integer> getAllProductIds() {
+	private ArrayList<Integer> getAllProductIds() throws IOException {
 		ArrayList<Integer> productIds = new ArrayList<>();
 		if (REAL_MATCHING_ITEMS)
-			productIds.addAll(getRealMatchingItemIds());
+			productIds.addAll(new ArrayList<Integer>(getRealMatchingItemIdsAndNames().keySet()));
 		else {
 			productIds.addAll(baseProductIds);
 			productIds.addAll(twoDimProductIds);
@@ -285,6 +296,14 @@ public class BatchGenerator {
 			idList.add(Integer.valueOf(name.trim()));
 		}
 		return idList;
+	}
+	
+	private Map<Integer, String> getRealMatchingItemIdsAndNames() throws IOException {
+		CSVParser csvParser = new CSVParser();
+		StringBuilder errorMessage = new StringBuilder();
+		matchingItemIdsAndNames = csvParser.parseMatchingItems("2015-01-07 Matching Items.txt", errorMessage);
+		
+		return matchingItemIdsAndNames;
 	}
 
 	public void generateMatchingItemIds(int numberOf2DimMatchingItems, int numberOf3DimMatchingItems) {
