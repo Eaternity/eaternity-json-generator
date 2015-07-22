@@ -1,5 +1,7 @@
 package ch.generator;
 
+import com.google.common.collect.Iterables;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -8,11 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public class BatchGenerator {
 
@@ -23,10 +21,10 @@ public class BatchGenerator {
 	public static final int MONTH = 6;
 
 	public static final int AMOUNT_SUPPLIES = 22;
-	public static final int AMOUNT_RECIPES = 250;
+	public static final int AMOUNT_RECIPES = 40;
 	public static final int AMOUNT_TRANSIENT = 0;
 	// if you change this, also change INGREDIENT_WEIGHT_RANGE_RECIPES to get a couple of climate friendly recipe
-	public static final int AMOUNT_INGREDIENTS_PER_RECIPE = 3;
+	public static final int AMOUNT_INGREDIENTS_PER_RECIPE = 10;
 	public static final int AMOUNT_INGREDIENTS_PER_SUPPLY = 50;
 	public static final int AMOUNT_INGREDIENTS_TRANSIENT = 4000;
 	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 100;
@@ -44,7 +42,7 @@ public class BatchGenerator {
 	private static final int TWO_DIMENSIONAL_BASE_NUMBER = 10000;
 	private static final int THREE_DIMENSIONAL_BASE_NUMBER = 20000;
 
-	private static final boolean REAL_MATCHING_ITEMS = true;
+	private static final boolean REAL_MATCHING_ITEMS = false;
 	private int totalAmountIngredients = AMOUNT_TRANSIENT * AMOUNT_INGREDIENTS_TRANSIENT + (AMOUNT_RECIPES - AMOUNT_TRANSIENT) * AMOUNT_INGREDIENTS_PER_RECIPE;
 
 	private final List<Integer> baseProductIds = getBaseProductIds(900 * PERCENTAGE_BASE_INGREDIENTS / 100 + 1);
@@ -53,7 +51,9 @@ public class BatchGenerator {
 
 	private List<Integer> productIds = new ArrayList<Integer>();
 	private List<String> countries = new ArrayList<String>();
-	
+	private List<String> menuNames = getMenuNames();
+	private Iterator<String> menuNamesIterator = Iterables.cycle(menuNames).iterator();
+
 	private static final int INGREDIENT_WEIGHT_RANGE_RECIPES = 80;
 	private static final int INGREDIENT_WEIGHT_RANGE_SUPPLIES = 6000;
 
@@ -89,7 +89,6 @@ public class BatchGenerator {
 	 * Generate a recipe batch json with AMOUNT_INGREDIENTS_PER_RECIPE recipes and
 	 * AMOUNT_INGREDIENTS_PER_RECIPE or AMOUNT_INGREDIENTS_TRANSIENT ingredients each.
 	 * 
-	 * @param args
 	 */
 	public void generateRecipeJSON() {
 		System.out.println("Amount of recipes: " + AMOUNT_RECIPES);
@@ -148,6 +147,10 @@ public class BatchGenerator {
 			compositeRootJSON += "\"date\": ";
 
 		compositeRootJSON += "\"" + YEAR + "-" + MONTH + "-" + generateRandomDay() + "\",";
+
+		if (kindOfcompositeRoot.equals("recipe")) {
+			compositeRootJSON += "\"title\": \"" + menuNamesIterator.next() + "\",";
+		}
 
 		compositeRootJSON += "	\"ingredients\": [\n";
 		for (int i = 0; i < numberOfIngredients; i++) {
@@ -286,6 +289,16 @@ public class BatchGenerator {
 			countryNames.add(new String(name.trim()));
 		}
 		return countryNames;
+	}
+
+	private List<String> getMenuNames() {
+		String names = getContentFromFile("menu_names.txt");
+		String[] namesSplitted = names.split(",");
+		List<String> menuNames = new ArrayList<String>();
+		for (String name : namesSplitted) {
+			menuNames.add(new String(name.trim()));
+		}
+		return menuNames;
 	}
 
 	private List<Integer> getRealMatchingItemIds() {
