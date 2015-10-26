@@ -4,11 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
@@ -53,6 +49,20 @@ public class CSVParser {
 		
 		return matchingItems;
 	}
+
+    public List<Map<Locale, String>> parseLocaleNames(String fileName, StringBuilder errorMessage) throws IOException {
+        List<Map<Locale, String>> menuNames = new ArrayList<>();
+
+        List<List<String>> linesList = parseFile(fileName, errorMessage, ",", 2);
+
+        for (List<String> singleLine : linesList) {
+            Map<Locale, String> localizedMap = new HashMap<>();
+            localizedMap.put(Locale.GERMAN, singleLine.get(0));
+            localizedMap.put(Locale.FRENCH, singleLine.get(1));
+            menuNames.add(localizedMap);
+        }
+        return menuNames;
+    }
 
 	
 	public static String escapeJsonString(String string) {
@@ -106,4 +116,6 @@ public class CSVParser {
         }
         return sb.toString();
     }
+
+
 }

@@ -17,14 +17,14 @@ public class BatchGenerator {
 	// ATTENTION These whole setting work just until 500 baseproducts!
 	// Max AMOUNT_INGREDIENTS_PER_RECIPE = PERCENTAGE_BASE_INGREDIENTS * 500 / 100
 
-	public static final int YEAR = 2014;
-	public static final int MONTH = 6;
+	public static final int YEAR = 2015;
+	public static final int MONTH = 10;
 
-	public static final int AMOUNT_SUPPLIES = 22;
-	public static final int AMOUNT_RECIPES = 40;
+	public static final int AMOUNT_SUPPLIES = 2;
+	public static final int AMOUNT_RECIPES = 125;
 	public static final int AMOUNT_TRANSIENT = 0;
 	// if you change this, also change INGREDIENT_WEIGHT_RANGE_RECIPES to get a couple of climate friendly recipe
-	public static final int AMOUNT_INGREDIENTS_PER_RECIPE = 10;
+	public static final int AMOUNT_INGREDIENTS_PER_RECIPE = 3;
 	public static final int AMOUNT_INGREDIENTS_PER_SUPPLY = 50;
 	public static final int AMOUNT_INGREDIENTS_TRANSIENT = 4000;
 	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 100;
@@ -42,7 +42,7 @@ public class BatchGenerator {
 	private static final int TWO_DIMENSIONAL_BASE_NUMBER = 10000;
 	private static final int THREE_DIMENSIONAL_BASE_NUMBER = 20000;
 
-	private static final boolean REAL_MATCHING_ITEMS = false;
+	private static final boolean REAL_MATCHING_ITEMS = true;
 	private int totalAmountIngredients = AMOUNT_TRANSIENT * AMOUNT_INGREDIENTS_TRANSIENT + (AMOUNT_RECIPES - AMOUNT_TRANSIENT) * AMOUNT_INGREDIENTS_PER_RECIPE;
 
 	private final List<Integer> baseProductIds = getBaseProductIds(900 * PERCENTAGE_BASE_INGREDIENTS / 100 + 1);
@@ -51,8 +51,11 @@ public class BatchGenerator {
 
 	private List<Integer> productIds = new ArrayList<Integer>();
 	private List<String> countries = new ArrayList<String>();
-	private List<String> menuNames = getMenuNames();
-	private Iterator<String> menuNamesIterator = Iterables.cycle(menuNames).iterator();
+	private List<Map<Locale, String>> menuNames = getMenuNames();
+	private List<Map<Locale, String>> ingredientNames = getIngredientNames();
+
+	private Iterator<Map<Locale, String>> menuNamesIterator = Iterables.cycle(menuNames).iterator();
+	private Iterator<Map<Locale, String>> ingredientNamesIterator = Iterables.cycle(ingredientNames).iterator();
 
 	private static final int INGREDIENT_WEIGHT_RANGE_RECIPES = 80;
 	private static final int INGREDIENT_WEIGHT_RANGE_SUPPLIES = 6000;
@@ -62,7 +65,6 @@ public class BatchGenerator {
 	private static final String[] PROCESSING_MODES = new String[] { "raw", "unboned", "boned", "skinned", "beheaded", "fillet", "cut", "boiled", "peeled" };
 	private static final String[] CONSERVATION_MODES = new String[] { "fresh", "frozen", "dried", "conserved", "canned", "boiled-down" };
 	private static final String[] PACKAGING_MODES = new String[] { "plastic", "paper", "pet", "tin", "alu", "glas", "cardboard", "tetra" };
-	private static final String[] INGREDIENT_NAMES = getIngredientNames();
 
 	private Random rand = new Random();
 	private Map<Integer, String> matchingItemIdsAndNames;
@@ -149,7 +151,7 @@ public class BatchGenerator {
 		compositeRootJSON += "\"" + YEAR + "-" + MONTH + "-" + generateRandomDay() + "\",";
 
 		if (kindOfcompositeRoot.equals("recipe")) {
-			compositeRootJSON += "\"title\": \"" + menuNamesIterator.next() + "\",";
+			compositeRootJSON += generateLocalizedJSONField("titles", menuNamesIterator.next()) + ",";;
 		}
 
 		compositeRootJSON += "	\"ingredients\": [\n";
@@ -162,6 +164,19 @@ public class BatchGenerator {
 		return compositeRootJSON;
 	}
 
+	private String generateLocalizedJSONField(String fieldName, Map<Locale, String> localizedValues) {
+		String json = "\"" + fieldName + "\": [";
+		int i = 0;
+		for (Locale locale : localizedValues.keySet()) {
+			json += "{ \"language\": \"" + locale.getLanguage() + "\", \"value\": \"" + localizedValues.get(locale) + "\" }";
+			if (i < localizedValues.size() - 1)
+				json += ",\n";
+			i++;
+		}
+		json += "]";
+		return json;
+	}
+
 	private String generateIngredientJSON(String kindOfcompositeRoot, List<Integer> productIdsCopy) {
 		int weightRange = INGREDIENT_WEIGHT_RANGE_RECIPES;
 		if (kindOfcompositeRoot.equals("supply"))
@@ -171,13 +186,15 @@ public class BatchGenerator {
 		String ingredientJSON = "{";
 		int index = rand.nextInt(productIdsCopy.size());
 		ingredientJSON += "\"id\": \"" + productIdsCopy.get(index) + "\",";
-		String ingredientName;
+		Map<Locale, String> localizedIngredientNames;
 		if (REAL_MATCHING_ITEMS) {
-			ingredientName = matchingItemIdsAndNames.get(productIdsCopy.get(index));
+			localizedIngredientNames = new HashMap<>();
+			localizedIngredientNames.put(Locale.GERMAN, matchingItemIdsAndNames.get(productIdsCopy.get(index)));
+			//TODO put here the french name localizedIngredientNames.put(Locale.FRENCH, ...)
 		} else {
-			ingredientName = INGREDIENT_NAMES[rand.nextInt(INGREDIENT_NAMES.length)];
+			localizedIngredientNames = ingredientNamesIterator.next();
 		}
-		ingredientJSON += "\"name\": \"" + ingredientName + "\",";
+		ingredientJSON += generateLocalizedJSONField("names", localizedIngredientNames) + ",";;
 		ingredientJSON += "\"origin\": \"" + countries.get(rand.nextInt(countries.size())) + "\",";
 		ingredientJSON += "\"amount\": " + rand.nextInt(weightRange) + ",";
 		ingredientJSON += "\"transport\": \"" + TRANSPORATION_MODES[rand.nextInt(TRANSPORATION_MODES.length)] + "\",";
@@ -291,25 +308,18 @@ public class BatchGenerator {
 		return countryNames;
 	}
 
-	private List<String> getMenuNames() {
-		String names = getContentFromFile("menu_names.txt");
-		String[] namesSplitted = names.split(",");
-		List<String> menuNames = new ArrayList<String>();
-		for (String name : namesSplitted) {
-			menuNames.add(new String(name.trim()));
-		}
-		return menuNames;
+	private List<Map<Locale, String>> getMenuNames() throws IOException {
+		CSVParser csvParser = new CSVParser();
+		StringBuilder errorMessage = new StringBuilder();
+		return csvParser.parseLocaleNames("menu-names-DE-FR.csv", errorMessage);
 	}
 
-	private List<Integer> getRealMatchingItemIds() {
-		String ids = getContentFromFile("real_matching_item_ids.txt");
-		String[] idsSplitted = ids.split(",");
-		List<Integer> idList = new ArrayList<Integer>();
-		for (String name : idsSplitted) {
-			idList.add(Integer.valueOf(name.trim()));
-		}
-		return idList;
+	private List<Map<Locale, String>> getIngredientNames() throws IOException {
+		CSVParser csvParser = new CSVParser();
+		StringBuilder errorMessage = new StringBuilder();
+		return csvParser.parseLocaleNames("ingredient-names-DE-FR.csv", errorMessage);
 	}
+
 	
 	private Map<Integer, String> getRealMatchingItemIdsAndNames() throws IOException {
 		CSVParser csvParser = new CSVParser();
@@ -361,37 +371,5 @@ public class BatchGenerator {
 				1663, 1664, 1665, 1666, 1667, 1668, 1669, 1670, 1671, 1672, 1673, 1674, 1675, 1676 };
 
 		return new ArrayList<Integer>(Arrays.asList(fPIds));
-	}
-	
-	private static String[] getIngredientNames() {
-		return new String[] { "Rapsöl", "Olivenöl", "Sonnenblumenöl", "Margarine", "Sojaöl", "Sesamöl", "Erdnussöl", "Distelöl", "Baumnussöl", "Palmöl", "Zitronensaft", "Tomaten",
-			"Federkohl", "Kartoffeln", "Knollensellerie", "Schwarzwurzel", "Apfel", "Zwiebeln", "Knoblauch", "Spinat", "Maniok", "Mais", "Kichererbsen", "Kürbis", "Orangen", "Karotten", "Wirz", "Rosenkohl", "Lauch",
-			"Bananen", "Stangensellerie", "Mangold", "Zucchini", "Aubergine", "Peperoni", "Broccoli", "Pastinaken", "Blumenkohl", "Linsen", "Kefen", "Oliven", "Erbsen", "Soja", "Bohnen", "Bleichspargel", "Birnen",
-			"Avocado", "Peperoncini", "Rucola", "Kopfsalat", "Artischocken", "Batavia", "Chicorée", "Cherrytomaten", "Chinakohl", "Cicorino", "Eisbergsalat", "Endivie", "Fenchel", "Frühkartoffeln", "Gurken", "Kohlrabi",
-			"Lattich", "Lollo", "Löwenzahn", "Nüsslisalat", "Portulak", "Radieschen", "Randen", "Rettich", "Romanesco", "Rotkohl", "Rüben", "Schalotte", "Topinambur", "Weisskohl", "Zuckerhut", "Grünspargel",
-			"Pariserkarotten", "Rispentomaten", "Melone", "Petersilienwurzel", "Meerrettich", "Limette", "Trauben", "Rosinen", "Aprikosen", "Zitronen", "Zwetschgen", "Petersilie", "Salbei", "Salz", "Curry", "Pfeffer",
-			"Koriander", "Galgant", "Schnittlauch", "Zucker", "Basilikum", "Ingwer", "Dillkraut", "Thymian", "Bärlauch", "Bohnenkraut", "Brennnesseln", "Dillsamen", "Eisenkraut", "Estragon", "Gänseblümchen",
-			"Holunderblüten", "Kapuzinerblüte", "Kerbel", "Liebstöckel", "Majoran", "Minze", "Oregano", "Pelargonie", "Ringelblume", "Sauerampfer", "Veilchen", "Ysop", "Zitronenmelisse", "Waldmeister", "Chilli", "Zimt",
-			"Safran", "Kokosnussmilch", "Soja Sauce", "Honig", "Essig", "Sambal Oelek", "Kokos", "Kapern", "Stärke", "Stärke", "Sojamilch", "Currypaste", "Senf", "Hefe", "Ketchup", "Aceto Balsamico", "Reisessig",
-			"Backpulver", "Gelatine", "Himbeeressig", "Goldhirse", "Quinoa", "Spaghetti", "Weissmehl", "Hartweizengries", "Brot", "Maisgriess", "Reis", "Nudeln", "Gnocchi", "Couscous", "Bulghur", "Risottoreis", "Toast",
-			"Grahammehl", "Halbweissmehl", "Roggenschrot", "Multikornmehl", "Blätterteig", "Rollgerste", "Grünkern", "Paniermehl", "Haferflocken", "Glasnudeln", "Hirseflocken", "Brötchen", "Dinkelmehl", "Reismehl",
-			"Kuchenteig", "Vollkornmehl", "Quorn", "Tofu", "Tempeh", "Seitan", "Soja", "Pommes", "Gemüsebrühe", "Essiggurken", "Soja", "Strudelteig", "Sauerkraut", "Schokolade", "Schokolade", "Schokolade",
-			"Cashewnüsse", "Waldpilze", "Erdnüsse", "Baumnüsse", "Champignons", "Pistazien", "Pinienkerne", "Kürbiskerne", "Mandeln", "Kerne", "Sonnenblumenkerne", "Sesam", "Haselnüsse", "Marroni", "Käse", "Eier",
-			"Fisch", "Schweinefleisch", "Schinken", "Rindfleisch", "Kalbfleisch", "Hackfleisch", "Lammfleisch", "Poulet", "Hirschfleisch", "Rohwurst", "Wurst", "Kaninchenfleisch", "Kängurufleisch", "Straussenfleisch",
-			"Kudu", "Bratwurst", "Bacon", "Quark", "Speck", "Ricotta", "Crevetten", "Ente", "Gorgonzola", "Mascarpone", "Feta", "Mozzarella", "Butter", "Milch", "Joghurt", "Rahm", "Mayonnaise", "Ziegenfleisch",
-			"Garnelen", "Garnelenpaste", "Kalbsbratwurst", "Käse", "Felchen", "Brie", "Gruyere", "Edamer", "Kalbsgehacktes", "Emmentaler", "Parmesan", "Bündnerfleisch", "Lachsforelle", "Rahm", "Sauerrahm", "Konfitüre",
-			"Marmelade", "Tomatenkonzentrat", "Milchpulver", "Gemüse", "Gewürze", "Nüsse", "Fleisch", "Wein", "Wasser", "Bier", "Fruchtsaft", "Orangensaft", "Apfelsaft", "Mineralwasser", "Buttermilch", "Algen",
-			"Ananas", "Apfelpektin", "Artischockenherzen", "Brot", "Brötchen", "Brunnenkresse", "Cheddar", "Kartoffelchips", "Maischips", "Cornflakes", "Eichblattsalat", "Eigelb", "Eiweiss", "Erdbeeren", "Garnelen",
-			"Himbeeren", "Joghurt", "Johannisbeeren", "Käse", "Käse", "Käse", "Kiwi", "Kompott", "Lachs", "Laugenbretzel", "Mango", "Mizuna", "Muskat", "Nektarine", "Pak Choi", "Passionsfrucht", "Pekannüsse",
-			"Perlhuhn", "Pfirsich", "Red Bull", "Selleriesalz", "Senfblätter", "Sprossen", "Steinpilze", "Tabasco", "Teig", "Thaibasilikum", "Thunfisch", "Tomatensaft", "Trevisosalat", "Vacherin",
-			"Violette Ritterlinge", "Waldbeeren", "Wolfsbarsch", "Ziegenkäse", "Zitronengras", "Kabeljau", "Languste", "Hummer", "Feigen", "Queller", "Kaffeebohnen", "Grapefruit", "Randensprossen", "Joghurt", "Joghurt",
-			"Steckrüben", "Verveine", "Fischeier", "Randensamen", "Mangold", "Kapuzinerkresse", "Mesclun", "Moosbeere", "Goldbrasse", "Saibling", "Weizen", "Foie gras", "Taube", "Einsiedlerkrebs", "Pfifferlinge",
-			"Trüffel", "Rosinenbrötchen", "Kakao", "Champagner", "Vermouth", "Portwein", "Pitaya", "Sternfrucht", "Gipfel", "Glucose", "Trimoline", "Cola", "Schnaps", "Gemüsebrühe", "Tomaten", "Tomatensugo", "Kompott",
-			"Gipfel", "Rinderbrühe", "Kräutertee", "Mandarinen", "Pflaumen", "Limonade", "Limonade", "Grana Padano", "Pangasius", "Muscheln", "Tilsiter", "Nudeln", "Claressefilet", "Zanderfilet", "Roter Soldatenfisch",
-			"Frühlingsrollen", "Zander", "Lorbeer", "Nelken", "Zitronenthymian", "Marsala", "Vollei", "Bergkräuter", "Silserbrot", "Eglifilet", "Spitzkohl", "Palmherzen", "Senfkörner", "Sternanis", "Eistee",
-			"Schwarztee", "Grüntee", "Mineralwasser", "Kaffeerahm", "Rosmarin", "Salami", "Datteln", "Frühlingszwiebeln", "Mandarinensaft", "Mangopulpe", "Quitte", "Vanilleschoten", "Sauerkirschen", "Edamame",
-			"Mu-Err-Pilze", "Hering", "Makrele", "Kalb", "Kalb", "Kalb", "Kalb", "Kalb", "Kalb", "Kalb", "Kalb", "Kalb", "Kalb", "Kalb", "Rind", "Rind", "Rind", "Rind", "Rind", "Rind", "Rind", "Rind", "Rind", "Rind",
-			"Rind", "Rind", "Rind", "Butter", "Eier", "Käse", "Quark", "Rahm", "Speiseeis", "Milch", "Fett", "Hafer", "Hirse", "Mais", "Reis", "Maismehl", "Roggenmehl", "Sauermilch", "Milch", "Milch", "Ziegenmilch",
-			"Milchpulver", "Molke", "Molkepulver", "Reisöl", "Stärke", "Stärke", "Valess" };
 	}
 }
