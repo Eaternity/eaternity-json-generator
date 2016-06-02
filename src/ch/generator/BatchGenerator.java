@@ -14,6 +14,8 @@ import java.util.*;
 
 public class BatchGenerator {
 
+	//------------------------------------- PROPERTIES - CHANGE THAT -------------------------------------
+
 	// ATTENTION These whole setting work just until 500 baseproducts!
 	// Max AMOUNT_INGREDIENTS_PER_RECIPE = PERCENTAGE_BASE_INGREDIENTS * 500 / 100
 
@@ -23,6 +25,7 @@ public class BatchGenerator {
 	public static final int AMOUNT_SUPPLIES = 2;
 	public static final int AMOUNT_RECIPES = 125;
 	public static final int AMOUNT_TRANSIENT = 0;
+
 	// if you change this, also change INGREDIENT_WEIGHT_RANGE_RECIPES to get a couple of climate friendly recipe
 	public static final int AMOUNT_INGREDIENTS_PER_RECIPE = 3;
 	public static final int AMOUNT_INGREDIENTS_PER_SUPPLY = 50;
@@ -30,8 +33,8 @@ public class BatchGenerator {
 	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 100;
 	public static final int PERCENTAGE_DIFFERENT_MITEMS = 100; // that means the percentage value are all different mItems, then it repeats
 
-	// TODO not implemented yet the dependance on this!
-	public static final int PERCENTAGE_MITEMS_CHANGED = 25; // this is maximum the PERCENTAGE_DIFFERENT_MITEMS
+	private static final int INGREDIENT_WEIGHT_RANGE_RECIPES = 80;
+	private static final int INGREDIENT_WEIGHT_RANGE_SUPPLIES = 6000;
 
 	// Here we can specify the probability of the different dimensional
 	// Ingredients
@@ -43,6 +46,9 @@ public class BatchGenerator {
 	private static final int THREE_DIMENSIONAL_BASE_NUMBER = 20000;
 
 	private static final boolean REAL_MATCHING_ITEMS = true;
+
+	//------------------------------------- CONSTANTS - DONT CHANGE -------------------------------------
+
 	private int totalAmountIngredients = AMOUNT_TRANSIENT * AMOUNT_INGREDIENTS_TRANSIENT + (AMOUNT_RECIPES - AMOUNT_TRANSIENT) * AMOUNT_INGREDIENTS_PER_RECIPE;
 
 	private final List<Integer> baseProductIds = getBaseProductIds(900 * PERCENTAGE_BASE_INGREDIENTS / 100 + 1);
@@ -57,9 +63,6 @@ public class BatchGenerator {
 	private Iterator<Map<Locale, String>> menuNamesIterator = Iterables.cycle(menuNames).iterator();
 	private Iterator<Map<Locale, String>> ingredientNamesIterator = Iterables.cycle(ingredientNames).iterator();
 
-	private static final int INGREDIENT_WEIGHT_RANGE_RECIPES = 80;
-	private static final int INGREDIENT_WEIGHT_RANGE_SUPPLIES = 6000;
-
 	private static final String[] TRANSPORATION_MODES = new String[] { "air", "ground", "sea", "train" };
 	private static final String[] PRODUCTION_MODES = new String[] { "standard", " organic", "fair-trade", "greenhouse", " farm", "wild-caught" };
 	private static final String[] PROCESSING_MODES = new String[] { "raw", "unboned", "boned", "skinned", "beheaded", "fillet", "cut", "boiled", "peeled" };
@@ -68,6 +71,7 @@ public class BatchGenerator {
 
 	private Random rand = new Random();
 	private Map<Integer, String> matchingItemIdsAndNames;
+
 
 	public BatchGenerator() throws IOException {
 		if (AMOUNT_TRANSIENT > AMOUNT_RECIPES)
