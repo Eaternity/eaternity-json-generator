@@ -22,14 +22,14 @@ public class BatchGenerator {
 	public static final int YEAR = 2014;
 	public static final int MONTH = 6;
 
-	public static final int AMOUNT_SUPPLIES = 2;
-	public static final int AMOUNT_RECIPES = 40;
-	public static final int AMOUNT_TRANSIENT = 0;
+	public static final int AMOUNT_SUPPLIES = 6;
+	public static final int AMOUNT_RECIPES = 125;
+	public static final int AMOUNT_TRANSIENT_RECIPES = 0;
 
 	// if you change this, also change INGREDIENT_WEIGHT_RANGE_RECIPES to get a couple of climate friendly recipe
 	public static final int AMOUNT_INGREDIENTS_PER_RECIPE = 10;
-	public static final int AMOUNT_INGREDIENTS_PER_SUPPLY = 50;
-	public static final int AMOUNT_INGREDIENTS_TRANSIENT = 0;
+	public static final int AMOUNT_INGREDIENTS_PER_SUPPLY = 35;
+	public static final int AMOUNT_INGREDIENTS_PER_TRANSIENT_RECIPES = 0;
 	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 100;
 	public static final int PERCENTAGE_DIFFERENT_MITEMS = 100; // that means the percentage value are all different mItems, then it repeats
 
@@ -40,7 +40,8 @@ public class BatchGenerator {
 
 	//------------------------------------- CONSTANTS - DONT CHANGE -------------------------------------
 
-	private int totalAmountIngredients = AMOUNT_TRANSIENT * AMOUNT_INGREDIENTS_TRANSIENT + (AMOUNT_RECIPES - AMOUNT_TRANSIENT) * AMOUNT_INGREDIENTS_PER_RECIPE;
+	private static final int TOTAL_AMOUNT_INGREDIENTS_RECIPES = AMOUNT_TRANSIENT_RECIPES * AMOUNT_INGREDIENTS_PER_TRANSIENT_RECIPES + (AMOUNT_RECIPES - AMOUNT_TRANSIENT_RECIPES) * AMOUNT_INGREDIENTS_PER_RECIPE;
+	private static final int TOTAL_AMOUNT_INGREDIENTS_SUPPLIES = AMOUNT_SUPPLIES * AMOUNT_INGREDIENTS_PER_SUPPLY;
 
 	private final List<Integer> baseProductIds = getBaseProductIds();
 
@@ -63,33 +64,33 @@ public class BatchGenerator {
 
 
 	public BatchGenerator() throws IOException {
-		if (AMOUNT_TRANSIENT > AMOUNT_RECIPES)
+		if (AMOUNT_TRANSIENT_RECIPES > AMOUNT_RECIPES)
 			throw new IllegalArgumentException("Amount transient recipes can not be bigger than total amount recipes");
 		ArrayList<Integer> allProductIds = getAllProductIds();
 
 		// add 2 because 1 for rounding and 1 for exclusion of end index.
-		countries = getCountryNames().subList(0, Math.min((PERCENTAGE_DIFFERENT_ORIGINS * totalAmountIngredients / 100 + 2), getCountryNames().size()));
-		productIds = new ArrayList<>(allProductIds.subList(0, Math.min(PERCENTAGE_DIFFERENT_MITEMS * totalAmountIngredients / 100 + 2, allProductIds.size())));
+		countries = getCountryNames().subList(0, Math.min((PERCENTAGE_DIFFERENT_ORIGINS * TOTAL_AMOUNT_INGREDIENTS_RECIPES / 100 + 2), getCountryNames().size()));
+		productIds = new ArrayList<>(allProductIds.subList(0, Math.min(PERCENTAGE_DIFFERENT_MITEMS * TOTAL_AMOUNT_INGREDIENTS_RECIPES / 100 + 2, allProductIds.size())));
 
 		// repeat the products in the list so that PERCENTAGE_DIFFERENT_MITEMS
 		// is correct
-		while (productIds.size() < totalAmountIngredients) {
+		while (productIds.size() < TOTAL_AMOUNT_INGREDIENTS_RECIPES) {
 			productIds.addAll(productIds);
 		}
 
-		productIds = productIds.subList(0, totalAmountIngredients + 2);
+		productIds = productIds.subList(0, TOTAL_AMOUNT_INGREDIENTS_RECIPES + 2);
 	}
 
 	/**
 	 * Generate a recipe batch json with AMOUNT_INGREDIENTS_PER_RECIPE recipes and
-	 * AMOUNT_INGREDIENTS_PER_RECIPE or AMOUNT_INGREDIENTS_TRANSIENT ingredients each.
+	 * AMOUNT_INGREDIENTS_PER_RECIPE or AMOUNT_INGREDIENTS_PER_TRANSIENT_RECIPES ingredients each.
 	 * 
 	 */
 	public void generateRecipeJSON() {
 		System.out.println("Amount of recipes: " + AMOUNT_RECIPES);
-		System.out.println("Amount of ingredients: " + totalAmountIngredients);
+		System.out.println("Amount of ingredients: " + TOTAL_AMOUNT_INGREDIENTS_RECIPES);
 
-		int counter = AMOUNT_TRANSIENT;
+		int counter = AMOUNT_TRANSIENT_RECIPES;
 
 		String batchRecipesJson = "[";
 
@@ -97,7 +98,7 @@ public class BatchGenerator {
 			batchRecipesJson += "{	\"request-id\": " + i + ",";
 			if (counter > 0) {
 				batchRecipesJson += "\"transient\": " + "true" + ",";
-				batchRecipesJson += generateCompositeRootJson(AMOUNT_INGREDIENTS_TRANSIENT, "recipe") + "}";
+				batchRecipesJson += generateCompositeRootJson(AMOUNT_INGREDIENTS_PER_TRANSIENT_RECIPES, "recipe") + "}";
 				counter--;
 			} else
 				batchRecipesJson += generateCompositeRootJson(AMOUNT_INGREDIENTS_PER_RECIPE, "recipe") + "}";
@@ -108,12 +109,12 @@ public class BatchGenerator {
 
 		batchRecipesJson += "]";
 
-		writeFile("batch_" + AMOUNT_RECIPES + "_recipes_" + totalAmountIngredients + "_ingredient.json", batchRecipesJson);
+		writeFile("batch_" + AMOUNT_RECIPES + "_recipes_" + TOTAL_AMOUNT_INGREDIENTS_RECIPES + "_ingredient.json", batchRecipesJson);
 	}
 
 	public void generateSupplyJSON() {
 		System.out.println("Amount of supplies: " + AMOUNT_SUPPLIES);
-		System.out.println("Amount of ingredients: " + totalAmountIngredients);
+		System.out.println("Amount of ingredients: " + TOTAL_AMOUNT_INGREDIENTS_SUPPLIES);
 
 		String batchRecipesJson = "[";
 
@@ -127,7 +128,7 @@ public class BatchGenerator {
 
 		batchRecipesJson += "]";
 
-		writeFile("batch_" + AMOUNT_SUPPLIES + "_supplies_" + totalAmountIngredients + "_ingredient.json", batchRecipesJson);
+		writeFile("batch_" + AMOUNT_SUPPLIES + "_supplies_" + TOTAL_AMOUNT_INGREDIENTS_SUPPLIES + "_ingredient.json", batchRecipesJson);
 	}
 
 	// **************************************************
@@ -312,32 +313,12 @@ public class BatchGenerator {
 		return returnString;
 	}
 
+	/**
+	 * Take care to import here only the NON-deleted baseproducts (in the products json: deleted=false)
+	 * @return
+	 */
 	private List<Integer> getBaseProductIds() {
-		Integer[] fPIds = new Integer[] { 2,3,4,5,7,8,9,10,11,12,100,101,102,103,104,105,106,107,108,109,
-				110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,
-				132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,153,154,
-				155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,
-				177,178,179,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,216,217,218,219,
-				220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,300,303,304,305,
-				306,307,308,309,310,311,312,313,315,316,317,318,319,320,321,400,401,402,403,404,406,409,
-				410,411,414,415,416,418,419,420,421,422,423,424,425,426,427,428,429,430,431,432,434,435,
-				437,500,501,502,503,505,512,515,516,517,518,519,600,601,602,700,701,703,704,705,706,707,
-				708,709,710,711,712,713,714,800,801,802,803,804,805,806,807,808,809,810,811,812,813,814,
-				815,816,818,819,820,821,822,823,825,826,827,828,829,830,831,832,833,834,835,836,837,838,
-				839,840,841,842,843,844,845,846,847,848,851,852,900,901,902,906,1000,1002,1003,1004,1101,
-				1102,1103,1104,1105,1106,1107,1108,1200,1201,1202,1203,1204,1205,1206,1207,1208,1209,1210,
-				1213,1214,1215,1216,1218,1219,1220,1221,1224,1225,1226,1228,1229,1231,1233,1234,1236,1238,
-				1239,1240,1241,1242,1243,1244,1246,1249,1250,1251,1252,1253,1255,1256,1257,1258,1260,1261,
-				1262,1263,1265,1266,1267,1268,1269,1270,1271,1272,1273,1274,1275,1276,1277,1283,1284,1285,
-				1286,1287,1288,1289,1290,1292,1293,1294,1295,1296,1297,1298,1299,1301,1306,1307,1308,1309,
-				1310,1311,1313,1315,1316,1321,1322,1332,1334,1335,1339,1341,1343,1502,1503,1504,1505,1506,
-				1521,1522,1532,1541,1546,1547,1554,1555,1557,1558,1559,1560,1561,1563,1564,1565,1567,1568,
-				1569,1570,1571,1572,1576,1580,1581,1582,1583,1591,1593,1597,1598,1599,1600,1601,1602,1608,
-				1618,1619,1623,1624,1627,1628,1629,1630,1631,1632,1633,1634,1635,1636,1637,1638,1639,1640,
-				1641,1642,1643,1644,1645,1646,1647,1648,1649,1650,1651,1652,1653,1654,1655,1656,1657,1658,
-				1659,1660,1661,1662,1663,1664,1665,1666,1667,1668,1669,1670,1671,1672,1673,1674,1675,1676,
-				1677,1678,1678,1679,1680,1681,1682,1685,1686,1687,1688,1689,1691,1692,1693,1694,1695,1697,
-				1698,1699,1700,1701,1702,1703,1704,1705,1706,1707 };
+		Integer[] fPIds = new Integer[] {2,3,4,5,7,8,9,10,11,12,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,153,154,155,156,157,158,159,160,161,162,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,300,303,304,305,306,307,308,309,310,311,312,313,315,316,317,318,319,320,321,401,402,403,404,406,409,410,411,414,415,416,418,419,420,421,422,423,424,425,426,427,428,429,430,431,432,434,435,437,500,501,502,503,505,512,515,516,517,518,519,600,601,602,700,701,703,704,705,706,707,708,709,710,711,712,713,714,800,801,802,803,804,805,806,807,808,809,810,811,812,813,814,815,816,818,820,821,822,825,826,827,828,829,830,831,832,833,834,835,836,837,839,840,841,842,843,844,845,846,847,848,851,852,900,901,902,906,1000,1002,1003,1004,1101,1102,1103,1104,1105,1106,1107,1108,1200,1201,1202,1203,1204,1205,1206,1207,1208,1209,1210,1213,1214,1215,1216,1218,1219,1220,1221,1224,1225,1226,1228,1229,1231,1233,1234,1236,1238,1239,1240,1241,1242,1243,1244,1246,1249,1250,1251,1252,1253,1255,1256,1257,1258,1260,1261,1262,1263,1265,1266,1267,1268,1269,1270,1271,1272,1273,1274,1275,1276,1277,1283,1285,1286,1287,1288,1289,1290,1292,1293,1294,1295,1296,1297,1298,1299,1301,1306,1307,1308,1309,1310,1311,1315,1316,1321,1322,1332,1334,1335,1339,1343,1502,1503,1504,1505,1506,1521,1522,1532,1541,1546,1547,1554,1555,1557,1558,1559,1560,1561,1563,1564,1565,1567,1568,1569,1570,1571,1572,1580,1581,1582,1583,1591,1593,1597,1598,1599,1601,1602,1608,1618,1619,1623,1624,1627,1628,1629,1630,1631,1632,1633,1634,1635,1636,1637,1638,1639,1640,1641,1642,1643,1644,1645,1646,1647,1648,1649,1650,1651,1652,1653,1654,1655,1656,1657,1658,1659,1660,1661,1662,1663,1664,1665,1666,1667,1668,1669,1670,1671,1672,1673,1674,1675,1676,1677,1678,1678,1679,1680,1681,1682,1685,1686,1687,1688,1689,1691,1692,1693,1694,1695,1697,1698,1699,1700,1701,1702,1703,1704,1705,1706,1707};
 
 		return new ArrayList<>(Arrays.asList(fPIds));
 	}
