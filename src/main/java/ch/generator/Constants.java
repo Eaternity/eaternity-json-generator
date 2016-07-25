@@ -1,9 +1,12 @@
 package ch.generator;
 
 /**
- *
+ * Holds constant values.
  */
-public class Constants {
+public final class Constants {
+
+    private Constants() { }
+
     public static final String FILENAME_NUTRITION_CHANGE = "reduced.csv";
 
     public static final char DEFAULT_CSV_DELIMITER = ';';

@@ -4,10 +4,18 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-
+/**
+ * Parses csv files.
+ * Deprecated, use JacksonCsvParser
+ */
+@Deprecated
 public class CSVParser {
 
 	public final String CSV_DELIMITER = ";";
