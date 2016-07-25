@@ -1,5 +1,6 @@
 package ch.generator;
 
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -26,36 +27,49 @@ public class NutritionReducedSchema {
 
     public NutritionReducedSchema() { }
 
-    public NutritionReducedSchema(final String id, final String name, final String process, final String nutrChangeFactor) { }
+    public NutritionReducedSchema(final String id, final String name, final String process, final String nutrChangeFactor) {
+        setId(id);
+        setName(name);
+        setProcess(process);
+        setNutrChangeFactor(nutrChangeFactor);
+    }
 
+    @JsonProperty(ID)
     public String getId() {
         return id;
     }
 
+    @JsonProperty(ID)
     public void setId(final String id) {
         this.id = id;
     }
 
+    @JsonProperty(NAME)
     public String getName() {
         return name;
     }
 
+    @JsonProperty(NAME)
     public void setName(final String name) {
         this.name = name;
     }
 
+    @JsonProperty(PROCESS)
     public String getProcess() {
         return process;
     }
 
+    @JsonProperty(PROCESS)
     public void setProcess(final String process) {
         this.process = process;
     }
 
+    @JsonProperty(NUTR_CHANGE_FACTOR)
     public String getNutrChangeFactor() {
         return nutrChangeFactor;
     }
 
+    @JsonProperty(NUTR_CHANGE_FACTOR)
     public void setNutrChangeFactor(final String nutrChangeFactor) {
         this.nutrChangeFactor = nutrChangeFactor;
     }
