@@ -11,7 +11,10 @@ import org.apache.commons.lang3.StringEscapeUtils;
 public class CSVParser {
 
 	public final String CSV_DELIMITER = ";";
-	
+
+
+
+
 	public List<List<String>> parseFile(String csvFileName, StringBuilder errorMessage, String separator, int length) throws IOException {
 		List<List<String>> linesList = new ArrayList<List<String>>();	
 			 
