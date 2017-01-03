@@ -11,8 +11,8 @@ public final class Main {
 	private Main() { }
 
 	public static void main(final String[] args) throws IOException {
-//		BatchGenerator batchGenerator = new BatchGenerator();
-//		batchGenerator.generateRecipeJSON();
+		BatchGenerator batchGenerator = new BatchGenerator();
+		batchGenerator.generateRecipeJSON();
 
 //		BatchGenerator batchGenerator2 = new BatchGenerator();
 //		batchGenerator2.generateSupplyJSON();

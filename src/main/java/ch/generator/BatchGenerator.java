@@ -37,7 +37,7 @@ public class BatchGenerator {
 	public static final int AMOUNT_TRANSIENT_RECIPES = 0;
 
 	// if you change this, also change INGREDIENT_WEIGHT_RANGE_RECIPES to get a couple of climate friendly recipe
-	public static final int AMOUNT_INGREDIENTS_PER_RECIPE = 10;
+	public static final int AMOUNT_INGREDIENTS_PER_RECIPE = 3;
 	public static final int AMOUNT_INGREDIENTS_PER_SUPPLY = 35;
 	public static final int AMOUNT_INGREDIENTS_PER_TRANSIENT_RECIPES = 0;
 	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 100;
@@ -46,7 +46,10 @@ public class BatchGenerator {
 	private static final int INGREDIENT_WEIGHT_RANGE_RECIPES = 80;
 	private static final int INGREDIENT_WEIGHT_RANGE_SUPPLIES = 6000;
 
-	private static final boolean REAL_MATCHING_ITEMS = false;
+	private static final boolean REAL_MATCHING_ITEMS = true;
+
+	private static final boolean UNKNOWN_TRANSPORT = false;
+	private static final boolean UNKNOWN_ORIGIN = false;
 
 	//------------------------------------- CONSTANTS - DONT CHANGE -------------------------------------
 
@@ -65,7 +68,7 @@ public class BatchGenerator {
 	private Iterator<Map<Locale, String>> menuNamesIterator = Iterables.cycle(menuNames).iterator();
 	private Iterator<Map<Locale, String>> ingredientNamesIterator = Iterables.cycle(ingredientNames).iterator();
 
-	private static final String[] TRANSPORATION_MODES = new String[] {"air", "ground", "sea", "train"};
+	private static final String[] TRANSPORTATION_MODES = new String[] {"air", "ground", ""};
 	private static final String[] PRODUCTION_MODES = new String[] {"standard", " organic", "fair-trade", "greenhouse", " farm", "wild-caught"};
 	private static final String[] PROCESSING_MODES = new String[] {"raw", "unboned", "boned", "skinned", "beheaded", "fillet", "cut", "boiled", "peeled"};
 	private static final String[] CONSERVATION_MODES = new String[] {"fresh", "frozen", "dried", "conserved", "canned", "boiled-down"};
@@ -207,9 +210,19 @@ public class BatchGenerator {
 			localizedIngredientNames = ingredientNamesIterator.next();
 		}
 		ingredientJSON += generateLocalizedJSONField("names", localizedIngredientNames) + ",";
-		ingredientJSON += "\"origin\": \"" + countries.get(rand.nextInt(countries.size())) + "\",";
+		ingredientJSON += "\"origin\": \"";
+		if (UNKNOWN_ORIGIN) {
+			ingredientJSON += "\",";
+		} else {
+			ingredientJSON += countries.get(rand.nextInt(countries.size())) + "\",";
+		}
+		ingredientJSON += "\"transport\": \"";
+		if (UNKNOWN_TRANSPORT) {
+			ingredientJSON += "\",";
+		} else {
+			ingredientJSON += TRANSPORTATION_MODES[rand.nextInt(TRANSPORTATION_MODES.length)] + "\",";
+		}
 		ingredientJSON += "\"amount\": " + rand.nextInt(weightRange) + ",";
-		ingredientJSON += "\"transport\": \"" + TRANSPORATION_MODES[rand.nextInt(TRANSPORATION_MODES.length)] + "\",";
 		ingredientJSON += "\"production\": \"" + PRODUCTION_MODES[rand.nextInt(PRODUCTION_MODES.length)] + "\",";
 		ingredientJSON += "\"processing\": \"" + PROCESSING_MODES[rand.nextInt(PROCESSING_MODES.length)] + "\",";
 		ingredientJSON += "\"conservation\": \"" + CONSERVATION_MODES[rand.nextInt(CONSERVATION_MODES.length)] + "\",";
@@ -271,7 +284,8 @@ public class BatchGenerator {
 	private ArrayList<Integer> getAllProductIds() throws IOException {
 		ArrayList<Integer> localProductIds = new ArrayList<>();
 		if (REAL_MATCHING_ITEMS) {
-			localProductIds.addAll(new ArrayList<>(getRealMatchingItemIdsAndNames().keySet()));
+			matchingItemIdsAndNames = getRealMatchingItemIdsAndNames();
+			localProductIds.addAll(new ArrayList<>(matchingItemIdsAndNames.keySet()));
 		} else {
 			localProductIds.addAll(baseProductIds);
 		}
