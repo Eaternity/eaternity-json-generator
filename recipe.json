@@ -1,12 +1,3 @@
 "recipe": {
-	"author": "Hans Muster",
 	"location": "schweiz",
-	"planned": "200",
-	"prepared": "150",
-	"servings": "5",
-	"feedbacks": [
-	    "very nice!",
-	    "amazing"
-	],
-	"customer-rating": "2.0",
-	"instruction": "take it easy",
+	"servings": "1",
