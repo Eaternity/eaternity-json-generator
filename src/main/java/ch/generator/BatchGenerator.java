@@ -33,12 +33,12 @@ public class BatchGenerator {
 	public static final int MONTH = 6;
 
 	public static final int AMOUNT_SUPPLIES = 6;
-	public static final int AMOUNT_RECIPES = 125;
+	public static final int AMOUNT_RECIPES = 38;
 	public static final int AMOUNT_TRANSIENT_RECIPES = 0;
 
 	// if you change this, also change INGREDIENT_WEIGHT_RANGE_RECIPES to get a couple of climate friendly recipe
-	public static final int AMOUNT_INGREDIENTS_PER_RECIPE = 3;
-	public static final int AMOUNT_INGREDIENTS_PER_SUPPLY = 35;
+	public static final int AMOUNT_INGREDIENTS_PER_RECIPE = 10;
+	public static final int AMOUNT_INGREDIENTS_PER_SUPPLY = 45;
 	public static final int AMOUNT_INGREDIENTS_PER_TRANSIENT_RECIPES = 0;
 	public static final int PERCENTAGE_DIFFERENT_ORIGINS = 100;
 	public static final int PERCENTAGE_DIFFERENT_MITEMS = 100; // that means the percentage value are all different mItems, then it repeats
@@ -46,7 +46,7 @@ public class BatchGenerator {
 	private static final int INGREDIENT_WEIGHT_RANGE_RECIPES = 80;
 	private static final int INGREDIENT_WEIGHT_RANGE_SUPPLIES = 6000;
 
-	private static final boolean REAL_MATCHING_ITEMS = true;
+	private static final boolean REAL_MATCHING_ITEMS = false;
 
 	private static final boolean UNKNOWN_TRANSPORT = false;
 	private static final boolean UNKNOWN_ORIGIN = false;
@@ -69,7 +69,7 @@ public class BatchGenerator {
 	private Iterator<Map<Locale, String>> ingredientNamesIterator = Iterables.cycle(ingredientNames).iterator();
 
 	private static final String[] TRANSPORTATION_MODES = new String[] {"air", "ground", ""};
-	private static final String[] PRODUCTION_MODES = new String[] {"standard", " organic", "fair-trade", "greenhouse", " farm", "wild-caught"};
+	private static final String[] PRODUCTION_MODES = new String[] {"standard", "organic", "fair-trade", "greenhouse", "farm", "wild-caught"};
 	private static final String[] PROCESSING_MODES = new String[] {"raw", "unboned", "boned", "skinned", "beheaded", "fillet", "cut", "boiled", "peeled"};
 	private static final String[] CONSERVATION_MODES = new String[] {"fresh", "frozen", "dried", "conserved", "canned", "boiled-down"};
 	private static final String[] PACKAGING_MODES = new String[] {"plastic", "paper", "pet", "tin", "alu", "glas", "cardboard", "tetra"};
@@ -184,7 +184,7 @@ public class BatchGenerator {
 		for (Locale locale : localizedValues.keySet()) {
 			json += "{ \"language\": \"" + locale.getLanguage() + "\", \"value\": \"" + localizedValues.get(locale) + "\" }";
 			if (i < localizedValues.size() - 1) {
-				json += ",\n";
+				json += ",";
 			}
 			i++;
 		}

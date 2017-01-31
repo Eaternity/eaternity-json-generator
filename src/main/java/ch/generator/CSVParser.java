@@ -70,6 +70,7 @@ public class CSVParser {
             Map<Locale, String> localizedMap = new HashMap<>();
             localizedMap.put(Locale.GERMAN, singleLine.get(0));
             localizedMap.put(Locale.FRENCH, singleLine.get(1));
+            localizedMap.put(Locale.ENGLISH, singleLine.get(2));
             menuNames.add(localizedMap);
         }
         return menuNames;
